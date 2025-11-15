@@ -7,4 +7,8 @@ bot = telebot.TeleBot(TOKEN)
 def start(message):
     bot.reply_to(message, "Salom, ishga tushdim!")
 
+@bot.message_handler(commands=['restart'])
+def start(message):
+    bot.reply_to(message, "Bot qayta yuklandi!")
+
 bot.infinity_polling()
