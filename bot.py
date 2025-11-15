@@ -1,14 +1,11 @@
 import telebot
+import os
 
-bot = telebot.TeleBot('8514788206:AAGeVapTQe1oGcLt1io5J3zbc4885eh1dZM')
+TOKEN = os.getenv("8514788206:AAGeVapTQe1oGcLt1io5J3zbc4885eh1dZM")
+bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
-def main(message):
-    bot.send_message(message.chat.id, 'Assalomu alaykum!')
+def start(message):
+    bot.reply_to(message, "Salom, ishga tushdim!")
 
-@bot.message_handler(commands=['restart'])
-def main(message):
-    bot.send_message(message.chat.id, 'Bot qayta yuklandi')
-
-
-bot.polling()
+bot.infinity_polling()
