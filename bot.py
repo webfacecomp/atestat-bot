@@ -1,4 +1,5 @@
 import os
+print("TOKEN VALUE >>>", repr(TOKEN))
 import telebot
 from telebot import types
 
@@ -26,5 +27,3 @@ def choose_lang(message):
         bot.send_message(message.chat.id, "Siz o‘zbek tilini tanladingiz. Ajoyib!")
 
 bot.infinity_polling()
-
-print("TOKEN VALUE >>>", repr(TOKEN))
