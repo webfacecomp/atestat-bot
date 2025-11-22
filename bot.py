@@ -2,7 +2,7 @@ import os
 import telebot
 from telebot import types
 
-TOKEN = os.getenv("8514788206:AAGeVapTQe1oGcLt1io5J3zbc4885eh1dZM")
+TOKEN = os.environ.get("BOT_TOKEN") 
 print("TOKEN VALUE >>>", repr(TOKEN))
 bot = telebot.TeleBot(TOKEN)
 
