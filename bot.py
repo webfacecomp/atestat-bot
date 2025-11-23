@@ -36,7 +36,7 @@ def choose_lang(message):
 
         bot.send_message(chat_id, "Вы учитель или ученик?", reply_markup=markup)
 
-    else:
+      else:
         user_lang[chat_id] = "uz"
         bot.send_message(chat_id, "Siz o‘zbek tilini tanladingiz. Ajoyib!")
 
