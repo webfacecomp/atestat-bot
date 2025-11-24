@@ -72,33 +72,34 @@ def role_chosen(message):
             bot.send_message(chat_id, "Yaxshi! Siz o‘quvchi rolini tanladingiz.")
 
 
-bot.infinity_polling()
 
+# Dars jadvali komandasi
 @bot.message_handler(commands=['dars_jadval'])
 def ask_class(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
-
     for cls in classes:
         markup.add(types.KeyboardButton(cls))
-
     bot.send_message(
         message.chat.id,
         "Siz nechinchi sinf siz?",
         reply_markup=markup
     )
 
-
 @bot.message_handler(func=lambda m: m.text in [
     "5-sinf", "6-sinf", "7-sinf",
     "8-sinf", "9-sinf", "10-sinf", "11-sinf"
 ])
 def send_schedule(message):
-    sinf = message.text.replace("-sinf", "")   # "5-sinf" → "5"
-    image_path = f"images/{sinf}.jpg"          # Masalan: images/5.jpg
+    sinf = message.text.replace("-sinf", "")
+    # Render-da path xatosiz ishlashi uchun absolute path
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(base_dir, "images", f"{sinf}.jpg")
 
     try:
         with open(image_path, "rb") as photo:
             bot.send_photo(message.chat.id, photo, caption=f"{sinf}-sinf dars jadvali 📚")
     except FileNotFoundError:
         bot.send_message(message.chat.id, "Bu sinf uchun dars jadvali hali yuklanmagan.")
+
+bot.infinity_polling()
