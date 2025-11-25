@@ -56,9 +56,6 @@ def choose_lang(message):
     bot.send_message(chat_id, role_text, reply_markup=markup)
 
 
-# ================================
-# ROLE TANLANGANDA — ASOSIY MENYU
-# ================================
 @bot.message_handler(func=lambda m: m.text in [
     "Учитель 👨🏻‍🏫", "Ученик 🧑🏻‍🎓",
     "O‘qituvchi 👨🏻‍🏫", "O‘quvchi 🧑🏻‍🎓"
@@ -67,16 +64,57 @@ def role_chosen(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
 
+    # ROLNI SAQLAB QO'YAMIZ
+    if message.text in ["Учитель 👨🏻‍🏫", "O‘qituvchi 👨🏻‍🏫"]:
+        user_stage[chat_id] = "teacher"
+    else:
+        user_stage[chat_id] = "student"
+
+    # ===========================
+    # O‘QITUVCHI MENYUSI
+    # ===========================
+    if user_stage[chat_id] == "teacher":
+        if lang == "ru":
+            bot.send_message(chat_id, 
+                "Для учителей пока нет функций, но скоро появятся новинки! 🔧")
+        else:
+            bot.send_message(chat_id, 
+                "Hozircha o‘qituvchilar uchun hech narsa yo‘q, lekin tez kunlarda yangilik bo‘ladi! 🔧")
+        return
+
+    # ===========================
+    # O‘QUVCHI MENYUSI
+    # ===========================
     if lang == "ru":
         bot.send_message(chat_id, "Как я могу помочь вам?")
+
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("Расписание уроков 📑", "ЧСБ демо 📝", "IQ вопросы 🧠", "Тесты по предметам 🔖")
+        markup.add(
+            "Расписание уроков 📑", 
+            "ЧСБ демо 📝", 
+            "IQ вопросы 🧠", 
+            "Тесты по предметам 🔖",
+            "SAT задачи 🧩",
+            "Я был не учеником 🔄"
+        )
+
+        bot.send_message(chat_id, "Выберите действие:", reply_markup=markup)
+
     else:
         bot.send_message(chat_id, "Menga sizga qanday yordam kerak?")
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("Dars jadvali 📑", "ChSB demo 📝", "IQ savollar 🧠", "Fan testlari 🔖")
 
-    bot.send_message(chat_id, "Quyidagilardan birini tanlang:", reply_markup=markup)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add(
+            "Dars jadvali 📑",
+            "ChSB demo 📝",
+            "IQ savollar 🧠",
+            "Fan testlari 🔖",
+            "SAT misollari 🧩",
+            "Men o‘quvchi emasdim 🔄"
+        )
+
+        bot.send_message(chat_id, "Quyidagilardan birini tanlang:", reply_markup=markup)
+
 
 
 # ================================
