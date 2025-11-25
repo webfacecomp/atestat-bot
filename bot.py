@@ -201,30 +201,25 @@ def send_schedule(message):
 # UNIVERSAL — BEKOR QILISH & BOSHLANG‘ICH MENYU
 # ============================================
 def get_cancel_buttons(lang):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    if lang == "ru":
-        markup.add("Отмена ↩️", "Главное меню ⏪")
+    markup=types.ReplyKeyboardMarkup(resize_keyboard=True)
+    if lang=="ru":
+        markup.add("Отмена ↩️","Главное меню ⏪")
     else:
-        markup.add("Bekor qilish ↩️", "Bosh menyu ⏪")
+        markup.add("Bekor qilish ↩️","Bosh menyu ⏪")
     return markup
 
-
-@bot.message_handler(func=lambda m: m.text in ["Bekor qilish ↩️", "Отмена ↩️"])
+@bot.message_handler(func=lambda m: m.text in ["Bekor qilish ↩️","Отмена ↩️"])
 def cancel_action(message):
-    chat_id = message.chat.id
-    lang = user_lang.get(chat_id, "uz")
-
-    if lang == "ru":
-        bot.send_message(chat_id, "Действие отменено.")
+    chat_id=message.chat.id
+    lang=user_lang.get(chat_id,"uz")
+    if lang=="ru":
+        bot.send_message(chat_id,"Действие отменено.")
     else:
-        bot.send_message(chat_id, "Amal bekor qilindi.")
+        bot.send_message(chat_id,"Amal bekor qilindi.")
+    role_chosen(message)
 
-    role_chosen(message)  # qayta menyuga qaytaramiz
-
-
-@bot.message_handler(func=lambda m: m.text in ["Bosh menyu ⏪", "Главное меню ⏪"])
+@bot.message_handler(func=lambda m: m.text in ["Bosh menyu ⏪","Главное меню ⏪"])
 def to_main_menu(message):
-    chat_id = message.chat.id
     role_chosen(message)
 
 
@@ -233,18 +228,14 @@ def to_main_menu(message):
 # ============================================
 @bot.message_handler(commands=['callback'])
 def send_test(message):
-    keyboard = types.InlineKeyboardMarkup()
-    btn = types.InlineKeyboardButton(
+    keyboard=types.InlineKeyboardMarkup()
+    btn=types.InlineKeyboardButton(
         text="E'tiroz yuborish ✍🏼",
-        url="https://t.me/khakimovvd"   # ❗ BU YERGA O‘Z TELEGRAM LINKINGNI YOZ
+        url="https://t.me/khakimovvd" # O‘Z TELEGRAM LINK
     )
     keyboard.add(btn)
+    bot.send_message(message.chat.id,"Agar bot haqida e’tirozlaringiz bo‘lsa pastdagi tugmani bosing 👇🏼",reply_markup=keyboard)
 
-    bot.send_message(
-        message.chat.id,
-        "Agar bot haqida e’tirozlaringiz bo‘lsa pastdagi tugmani bosing 👇🏼",
-        reply_markup=keyboard
-    )
 
 # =============================
 # BOSHQALAR — TEZ KUNLARDA YO‘Q FUNKSIYA
