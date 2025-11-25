@@ -246,6 +246,23 @@ def send_test(message):
         reply_markup=keyboard
     )
 
+# =============================
+# BOSHQALAR — TEZ KUNLARDA YO‘Q FUNKSIYA
+# =============================
+@bot.message_handler(func=lambda m: m.text not in [
+    "Dars jadvali 📑","Расписание уроков 📑",
+    "5-sinf","6-sinf","7-sinf","8-sinf","9-sinf","10-sinf","11-sinf"
+]+sum(groups.values(),[])+
+["Men o‘quvchi emasman","Я не ученик","Bekor qilish ↩️","Bosh menyu ⏪","Отмена ↩️","Главное меню ⏪"])
+def placeholder(message):
+    chat_id=message.chat.id
+    lang=user_lang.get(chat_id,"uz")
+    if lang=="ru":
+        bot.send_message(chat_id,"Скоро эта функция появится! ⏳")
+    else:
+        bot.send_message(chat_id,"Tez kunlarda bu funksiya qo‘shiladi ⏳")
+
+
 
 # ============================================
 # BOTNI ISHGA TUSHIRISH
