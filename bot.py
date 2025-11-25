@@ -20,7 +20,6 @@ def start(message):
         types.KeyboardButton("Rus 🇷🇺"),
         types.KeyboardButton("Uzb 🇺🇿")
     )
-
     bot.send_message(
         message.chat.id,
         "Assalomu alaykum!\nSiz qaysi tilda suhbatlashishni xohlaysiz?",
@@ -39,7 +38,6 @@ def choose_lang(message):
         user_lang[chat_id] = "ru"
         msg = "Вы выбрали русский язык."
         role_text = "Вы учитель или ученик?"
-
         teacher = "Учитель 👨🏻‍🏫"
         student = "Ученик 🧑🏻‍🎓"
 
@@ -47,7 +45,6 @@ def choose_lang(message):
         user_lang[chat_id] = "uz"
         msg = "Siz o‘zbek tilini tanladingiz."
         role_text = "Siz o‘qituvchimisiz yoki o‘quvchi?"
-
         teacher = "O‘qituvchi 👨🏻‍🏫"
         student = "O‘quvchi 🧑🏻‍🎓"
 
@@ -72,13 +69,10 @@ def role_chosen(message):
 
     if lang == "ru":
         bot.send_message(chat_id, "Как я могу помочь вам?")
-
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add("Расписание уроков 📑", "ЧСБ демо 📝", "IQ вопросы 🧠", "Тесты по предметам 🔖")
-
     else:
         bot.send_message(chat_id, "Menga sizga qanday yordam kerak?")
-
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add("Dars jadvali 📑", "ChSB demo 📝", "IQ savollar 🧠", "Fan testlari 🔖")
 
@@ -88,15 +82,13 @@ def role_chosen(message):
 # ================================
 # DARS JADVALI – 1-QADAM (SINF TANLASH)
 # ================================
-@bot.message_handler(func=lambda m: m.text in ["Dars jadvali", "Расписание уроков"])
+@bot.message_handler(func=lambda m: m.text in ["Dars jadvali 📑", "Расписание уроков 📑"])
 def ask_class(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
-
     user_stage[chat_id] = "choose_class"
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-
     classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
     for c in classes:
         markup.add(c)
@@ -118,10 +110,11 @@ groups = {
     "11": ["11-01", "11-02", "11-03"],
 }
 
+
 # ================================
 # SINF TANLANGANDA — GURUH TANLASH
 # ================================
-@bot.message_handler(func=lambda m: m.text.endswith("-sinf"))
+@bot.message_handler(func=lambda m: m.text in ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"])
 def choose_group(message):
     chat_id = message.chat.id
     sinf = message.text.replace("-sinf", "")
@@ -134,7 +127,6 @@ def choose_group(message):
 
     lang = user_lang.get(chat_id, "uz")
     text = "Выберите группу:" if lang == "ru" else "Siz qaysi guruhsiz?"
-
     bot.send_message(chat_id, text, reply_markup=markup)
 
 
@@ -145,18 +137,18 @@ def choose_group(message):
 def send_schedule(message):
     chat_id = message.chat.id
     group = message.text
-
-    image_path = f"images/{group}.jpg"
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(base_dir, "images", f"{group}.jpg")
 
     try:
         with open(image_path, "rb") as img:
             bot.send_photo(chat_id, img, caption=f"{group} dars jadvali 📚")
-    except:
+    except FileNotFoundError:
         bot.send_message(chat_id, "Dars jadvali mavjud emas.")
 
 
 # ================================
-# CALLBACK EXAMPLE – /test
+# CALLBACK EXAMPLE – /callback
 # ================================
 @bot.message_handler(commands=['callback'])
 def send_test(message):
@@ -174,9 +166,7 @@ def send_test(message):
 @bot.callback_query_handler(func=lambda call: call.data == "test_clicked")
 def callback_handler(call):
     bot.answer_callback_query(call.id)
-    
-    # Sizning shaxsiy Telegram akkauntingizga xabar yuborish
-    my_telegram_id = 6894161022  # bu yerga o'zingizning ID ni yozing
+    my_telegram_id = 6894161022  # O'zingizning shaxsiy Telegram ID
     bot.send_message(my_telegram_id, f"Foydalanuvchi @{call.from_user.username} callback tugmasini bosdi!")
 
 
