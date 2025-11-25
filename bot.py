@@ -5,124 +5,178 @@ from telebot import types
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
-user_lang = {}       # chat_id → "uz" yoki "ru"
-user_grade = {}      # chat_id → "5"
-user_parallel = {}   # chat_id → "5-01"
+# Har bir userning tili, roli, sinfi va guruhini saqlash uchun
+user_lang = {}
+user_stage = {}
+user_class = {}
 
-# -------------------- START -----------------------------
+# ================================
+# /start – TIL TANLASH
+# ================================
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(
-        types.KeyboardButton("Uzb 🇺🇿"),
-        types.KeyboardButton("Rus 🇷🇺")
+        types.KeyboardButton("Rus 🇷🇺"),
+        types.KeyboardButton("Uzb 🇺🇿")
     )
+
     bot.send_message(
         message.chat.id,
-        "Assalomu alaykum! / Привет!\nTilni tanlang / Выберите язык:",
+        "Assalomu alaykum!\nSiz qaysi tilda suhbatlashishni xohlaysiz?",
         reply_markup=markup
     )
 
 
-@bot.message_handler(commands=['callback'])
-def send(message):
-    send mess="Etirozlaringiz bolsa menga murojat qiling! @khakimovvd"
-
-# -------------------- TIL TANLASH -----------------------------
-@bot.message_handler(func=lambda m: m.text in ["Uzb 🇺🇿", "Rus 🇷🇺"])
+# ================================
+# TIL TANLANGANDA ROLE SAVOLI
+# ================================
+@bot.message_handler(func=lambda m: m.text in ["Rus 🇷🇺", "Uzb 🇺🇿"])
 def choose_lang(message):
     chat_id = message.chat.id
 
-    if message.text == "Uzb 🇺🇿":
-        user_lang[chat_id] = "uz"
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("O‘qituvchi 👨🏻‍🏫", "O‘quvchi 🧑🏻‍🎓")
-        bot.send_message(chat_id, "Siz o‘qituvchimisiz yoki o‘quvchi?", reply_markup=markup)
+    if message.text == "Rus 🇷🇺":
+        user_lang[chat_id] = "ru"
+        msg = "Вы выбрали русский язык."
+        role_text = "Вы учитель или ученик?"
+
+        teacher = "Учитель 👨‍🏫"
+        student = "Ученик 👨‍🎓"
 
     else:
-        user_lang[chat_id] = "ru"
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("Учитель 👨🏻‍🏫", "Ученик 🧑🏻‍🎓")
-        bot.send_message(chat_id, "Вы учитель или ученик?", reply_markup=markup)
+        user_lang[chat_id] = "uz"
+        msg = "Siz o‘zbek tilini tanladingiz."
+        role_text = "Siz o‘qituvchimisiz yoki o‘quvchi?"
 
-# -------------------- ROL TANLASH -----------------------------
+        teacher = "O‘qituvchi 👨‍🏫"
+        student = "O‘quvchi 👨‍🎓"
+
+    bot.send_message(chat_id, msg)
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add(types.KeyboardButton(teacher), types.KeyboardButton(student))
+
+    bot.send_message(chat_id, role_text, reply_markup=markup)
+
+
+# ================================
+# ROLE TANLANGANDA — ASOSIY MENYU
+# ================================
 @bot.message_handler(func=lambda m: m.text in [
-    "O‘qituvchi 👨🏻‍🏫", "O‘quvchi 🧑🏻‍🎓",
-    "Учитель 👨🏻‍🏫", "Ученик 🧑🏻‍🎓"
+    "Учитель 👨‍🏫", "Ученик 👨‍🎓",
+    "O‘qituvchi 👨‍🏫", "O‘quvchi 👨‍🎓"
 ])
 def role_chosen(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
 
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    if lang == "ru":
+        bot.send_message(chat_id, "Как я могу помочь вам?")
 
-    if lang == "uz":
-        markup.add("Dars jadvali 🗓")
-        markup.add("ChSB demo 📑")
-        markup.add("IQ savollar 🧠")
-        markup.add("Fan testlari 📘")
-        bot.send_message(chat_id, "Mendan sizga qanday yordam kerak?", reply_markup=markup)
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add("Расписание уроков", "ЧСБ демо", "IQ вопросы", "Тесты по предметам")
 
     else:
-        markup.add("Расписание уроков 🗓")
-        markup.add("ЧСБ демо 📑")
-        markup.add("IQ вопросы 🧠")
-        markup.add("Предметные тесты 📘")
-        bot.send_message(chat_id, "Чем могу помочь?", reply_markup=markup)
+        bot.send_message(chat_id, "Menga sizga qanday yordam kerak?")
 
-# -------------------- DARS JADVALI TANLASH -----------------------------
-@bot.message_handler(func=lambda m: "jadval" in m.text.lower() or "расписание" in m.text.lower())
-def ask_grade(message):
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add("Dars jadvali", "ChSB demo", "IQ savollar", "Fan testlari")
+
+    bot.send_message(chat_id, "Quyidagilardan birini tanlang:", reply_markup=markup)
+
+
+# ================================
+# DARS JADVALI – 1-QADAM (SINF TANLASH)
+# ================================
+@bot.message_handler(func=lambda m: m.text in ["Dars jadvali", "Расписание уроков"])
+def ask_class(message):
+    chat_id = message.chat.id
+    lang = user_lang.get(chat_id, "uz")
+
+    user_stage[chat_id] = "choose_class"
+
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for c in ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]:
+
+    classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
+    for c in classes:
         markup.add(c)
 
-    bot.send_message(message.chat.id, "Siz nechinchi sinfsiz?", reply_markup=markup)
+    text = "Выберите класс:" if lang == "ru" else "Siz nechinchi sinfsiz?"
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-# -------------------- SINfni tanlash → parallel chiqarish -----------------------------
-@bot.message_handler(func=lambda m: m.text in [
-    "5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"
-])
-def choose_parallel(message):
+
+# ================================
+# GURUHLAR RO‘YXATI
+# ================================
+groups = {
+    "5": ["5-01", "5-02"],
+    "6": ["6-01", "6-02"],
+    "7": ["7-01", "7-02", "7-03"],
+    "8": ["8-01", "8-02", "8-03"],
+    "9": ["9-01", "9-02", "9-03"],
+    "10": ["10-01", "10-02", "10-03"],
+    "11": ["11-01", "11-02", "11-03"],
+}
+
+# ================================
+# SINF TANLANGANDA — GURUH TANLASH
+# ================================
+@bot.message_handler(func=lambda m: m.text.endswith("-sinf"))
+def choose_group(message):
     chat_id = message.chat.id
-    grade = message.text.split("-")[0]  # "5"
-
-    user_grade[chat_id] = grade
+    sinf = message.text.replace("-sinf", "")
+    user_class[chat_id] = sinf
+    user_stage[chat_id] = "choose_group"
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for g in groups[sinf]:
+        markup.add(g)
 
-    parallel_count = {
-        "5": 2,
-        "6": 2,
-        "7": 3,
-        "8": 3,
-        "9": 3,
-        "10": 3,
-        "11": 3
-    }
+    lang = user_lang.get(chat_id, "uz")
+    text = "Выберите группу:" if lang == "ru" else "Siz qaysi guruhsiz?"
 
-    for i in range(1, parallel_count[grade] + 1):
-        btn = f"{grade}-0{i}"
-        markup.add(btn)
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-    bot.send_message(chat_id, "Qaysi sinf-parallel siz?", reply_markup=markup)
 
-# -------------------- DARS JADVALI RASM YUBORISH -----------------------------
-@bot.message_handler(func=lambda m: "-" in m.text and m.text[0].isdigit())
+# ================================
+# RASM YUBORISH
+# ================================
+@bot.message_handler(func=lambda m: m.text in sum(groups.values(), []))
 def send_schedule(message):
     chat_id = message.chat.id
-    parallel = message.text  # masalan "5-01"
+    group = message.text
 
-    image_path = f"images/{parallel}.jpg"   # images/5-01.jpg
+    image_path = f"images/{group}.jpg"
 
-    print("FAYL:", image_path)
+    try:
+        with open(image_path, "rb") as img:
+            bot.send_photo(chat_id, img, caption=f"{group} dars jadvali 📚")
+    except:
+        bot.send_message(chat_id, "Dars jadvali mavjud emas.")
 
-    if not os.path.exists(image_path):
-        bot.send_message(chat_id, "❗ Bu sinf uchun rasm topilmadi.")
-        return
 
-    with open(image_path, "rb") as img:
-        bot.send_photo(chat_id, img, caption=f"{parallel} dars jadvali 🗓")
+# ================================
+# CALLBACK EXAMPLE – /test
+# ================================
+@bot.message_handler(commands=['callback'])
+def send_test(message):
+    keyboard = types.InlineKeyboardMarkup()
+    btn = types.InlineKeyboardButton(
+        text="Bos!",
+        callback_data="test_clicked"
+    )
+    keyboard.add(btn)
 
-# -------------------- START POLLING -----------------------------
+    bot.send_message(message.chat.id, "Callback tugmasi:", reply_markup=keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "test_clicked")
+def callback_handler(call):
+    bot.answer_callback_query(call.id)
+    bot.send_message(call.message.chat.id, "Callback tugmasi bosildi!")
+
+
+# ================================
+# BOTNI ISHGA TUSHIRISH
+# ================================
 bot.infinity_polling()
