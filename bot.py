@@ -5,156 +5,119 @@ from telebot import types
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
-user_lang = {}
-user_role = {}
+user_lang = {}       # chat_id → "uz" yoki "ru"
+user_grade = {}      # chat_id → "5"
+user_parallel = {}   # chat_id → "5-01"
 
-# --------------------------
-#  START — Til so'rash
-# --------------------------
-
+# -------------------- START -----------------------------
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    rus = types.KeyboardButton("Rus 🇷🇺")
-    uzb = types.KeyboardButton("Uzb 🇺🇿")
-    markup.add(rus, uzb)
-
+    markup.add(
+        types.KeyboardButton("Uzb 🇺🇿"),
+        types.KeyboardButton("Rus 🇷🇺")
+    )
     bot.send_message(
         message.chat.id,
-        "Assalomu alaykum!\nSiz qaysi tilda suhbatlashishni hohlaysiz?",
+        "Assalomu alaykum! / Привет!\nTilni tanlang / Выберите язык:",
         reply_markup=markup
     )
 
-@bot.message_handler(func=lambda m: m.text in ["Rus 🇷🇺", "Uzb 🇺🇿"])
+# -------------------- TIL TANLASH -----------------------------
+@bot.message_handler(func=lambda m: m.text in ["Uzb 🇺🇿", "Rus 🇷🇺"])
 def choose_lang(message):
     chat_id = message.chat.id
 
-    if message.text == "Rus 🇷🇺":
-        user_lang[chat_id] = "ru"
-
+    if message.text == "Uzb 🇺🇿":
+        user_lang[chat_id] = "uz"
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        teacher = types.KeyboardButton("Учитель 👨‍🏫")
-        student = types.KeyboardButton("Ученик 👨‍🎓")
-        markup.add(teacher, student)
-
-        bot.send_message(chat_id, "Вы выбрали русский язык.", reply_markup=markup)
-        bot.send_message(chat_id, "Вы учитель или ученик?")
+        markup.add("O‘qituvchi 👨🏻‍🏫", "O‘quvchi 🧑🏻‍🎓")
+        bot.send_message(chat_id, "Siz o‘qituvchimisiz yoki o‘quvchi?", reply_markup=markup)
 
     else:
-        user_lang[chat_id] = "uz"
-
+        user_lang[chat_id] = "ru"
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        teacher = types.KeyboardButton("O‘qituvchi 👨‍🏫")
-        student = types.KeyboardButton("O‘quvchi 👨‍🎓")
-        markup.add(teacher, student)
+        markup.add("Учитель 👨🏻‍🏫", "Ученик 🧑🏻‍🎓")
+        bot.send_message(chat_id, "Вы учитель или ученик?", reply_markup=markup)
 
-        bot.send_message(chat_id, "Siz o‘zbek tilini tanladingiz.", reply_markup=markup)
-        bot.send_message(chat_id, "Siz o‘qituvchimisiz yoki o‘quvchi?")
-
+# -------------------- ROL TANLASH -----------------------------
 @bot.message_handler(func=lambda m: m.text in [
-    "Учитель 👨‍🏫", "Ученик 👨‍🎓",
-    "O‘qituvchi 👨‍🏫", "O‘quvchi 👨‍🎓"
+    "O‘qituvchi 👨🏻‍🏫", "O‘quvchi 🧑🏻‍🎓",
+    "Учитель 👨🏻‍🏫", "Ученик 🧑🏻‍🎓"
 ])
 def role_chosen(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
 
-    # Keyingi menyu
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    if lang == "ru":
-        schedule = types.KeyboardButton("Расписание уроков 🗓")
-        chsb = types.KeyboardButton("ЧСБ демо ⚙️")
-        iq = types.KeyboardButton("IQ вопросы 🧠")
-        test = types.KeyboardButton("Предметные тесты 📘")
-        markup.add(schedule, chsb, iq, test)
-
-        bot.send_message(chat_id, "Чем могу помочь?", reply_markup=markup)
-
-    else:
-        schedule = types.KeyboardButton("Dars jadvali 🗓")
-        chsb = types.KeyboardButton("ChSB demo ⚙️")
-        iq = types.KeyboardButton("IQ savollar 🧠")
-        test = types.KeyboardButton("Fan testlari 📘")
-        markup.add(schedule, chsb, iq, test)
-
+    if lang == "uz":
+        markup.add("Dars jadvali 🗓")
+        markup.add("ChSB demo 📑")
+        markup.add("IQ savollar 🧠")
+        markup.add("Fan testlari 📘")
         bot.send_message(chat_id, "Mendan sizga qanday yordam kerak?", reply_markup=markup)
 
-# --------------------------
-#  Asosiy menyu → Dars jadvali bosilganda
-# --------------------------
-@bot.message_handler(func=lambda m: m.text == "📚 Dars jadvali")
+    else:
+        markup.add("Расписание уроков 🗓")
+        markup.add("ЧСБ демо 📑")
+        markup.add("IQ вопросы 🧠")
+        markup.add("Предметные тесты 📘")
+        bot.send_message(chat_id, "Чем могу помочь?", reply_markup=markup)
+
+# -------------------- DARS JADVALI TANLASH -----------------------------
+@bot.message_handler(func=lambda m: "jadval" in m.text.lower() or "расписание" in m.text.lower())
 def ask_grade(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for i in range(5, 12):
-        markup.add(types.KeyboardButton(f"{i}-sinf"))
+    for c in ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]:
+        markup.add(c)
+
     bot.send_message(message.chat.id, "Siz nechinchi sinfsiz?", reply_markup=markup)
 
-# --------------------------
-# Sinf tanlangandan keyin — sinf guruhlarini chiqarish
-# --------------------------
-@bot.message_handler(func=lambda m: m.text.endswith("-sinf"))
-def choose_subclass(message):
-    sinf = message.text.replace("-sinf", "")
-    sinf = int(sinf)
+# -------------------- SINfni tanlash → parallel chiqarish -----------------------------
+@bot.message_handler(func=lambda m: m.text in [
+    "5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"
+])
+def choose_parallel(message):
+    chat_id = message.chat.id
+    grade = message.text.split("-")[0]  # "5"
+
+    user_grade[chat_id] = grade
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    # Har bir sinfga mos guruhlar
-    if sinf == 5:
-        groups = ["5-01", "5-02"]
-    elif sinf == 6:
-        groups = ["6-01", "6-02"]
-    elif sinf == 7:
-        groups = ["7-01", "7-02", "7-03"]
-    elif sinf == 8:
-        groups = ["8-01", "8-02", "8-03"]
-    elif sinf == 9:
-        groups = ["9-01", "9-02", "9-03"]
-    elif sinf == 10:
-        groups = ["10-01", "10-02", "10-03"]
-    elif sinf == 11:
-        groups = ["11-01", "11-02", "11-03"]
-    else:
-        groups = []
+    parallel_count = {
+        "5": 2,
+        "6": 2,
+        "7": 3,
+        "8": 3,
+        "9": 3,
+        "10": 3,
+        "11": 3
+    }
 
-    for g in groups:
-        markup.add(types.KeyboardButton(g))
+    for i in range(1, parallel_count[grade] + 1):
+        btn = f"{grade}-0{i}"
+        markup.add(btn)
 
-    bot.send_message(message.chat.id, "Siz qaysi sinfni tanlaysiz?", reply_markup=markup)
+    bot.send_message(chat_id, "Qaysi sinf-parallel siz?", reply_markup=markup)
 
-# --------------------------
-# Sinf-guruh tanlangandan keyin rasm jo‘natish
-# --------------------------
-@bot.message_handler(func=lambda m: "-" in m.text and m.text[:2].isdigit())
+# -------------------- DARS JADVALI RASM YUBORISH -----------------------------
+@bot.message_handler(func=lambda m: "-" in m.text and m.text[0].isdigit())
 def send_schedule(message):
-    group = message.text  # masalan: 7-01
-    image_path = f"images/{group}.jpg"
+    chat_id = message.chat.id
+    parallel = message.text  # masalan "5-01"
 
-    if os.path.exists(image_path):
-        with open(image_path, "rb") as img:
-            bot.send_photo(message.chat.id, img, caption=f"{group} dars jadvali 📚")
-    else:
-        bot.send_message(message.chat.id, "Bu sinf uchun dars jadvali hali yuklanmagan.")
+    image_path = f"images/{parallel}.jpg"   # images/5-01.jpg
 
-# --------------------------
-# QOLGAN MENYU BO'LIMLARI
-# --------------------------
-@bot.message_handler(func=lambda m: m.text == "🧠 ChSB demo")
-def chsb_demo(message):
-    # TODO: Bu bo'lim keyin to'ldiriladi
-    bot.send_message(message.chat.id, "ChSB demo bo‘limi tez orada qo‘shiladi 😊")
+    print("FAYL:", image_path)
 
-@bot.message_handler(func=lambda m: m.text == "📝 IQ savollar")
-def iq_questions(message):
-    # TODO: Bu yerga IQ savollar funksiyasi yoziladi
-    bot.send_message(message.chat.id, "IQ savollar bo‘limi hozircha tayyor emas 😊")
+    if not os.path.exists(image_path):
+        bot.send_message(chat_id, "❗ Bu sinf uchun rasm topilmadi.")
+        return
 
-@bot.message_handler(func=lambda m: m.text == "📘 Fan testlari")
-def fan_tests(message):
-    # TODO: Bu yerga fan testlari tizimi qo‘shiladi
-    bot.send_message(message.chat.id, "Fan testlari bo‘limi tez orada ishga tushadi 😊")
+    with open(image_path, "rb") as img:
+        bot.send_photo(chat_id, img, caption=f"{parallel} dars jadvali 🗓")
 
-# --------------------------
-
+# -------------------- START POLLING -----------------------------
 bot.infinity_polling()
