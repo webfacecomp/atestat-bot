@@ -90,16 +90,43 @@ def ask_class(message):
     "5-sinf", "6-sinf", "7-sinf",
     "8-sinf", "9-sinf", "10-sinf", "11-sinf"
 ])
-def send_schedule(message):
+def ask_parallel_classes(message):
+    chat_id = message.chat.id
     sinf = message.text.replace("-sinf", "")
-    # Render-da path xatosiz ishlashi uchun absolute path
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    image_path = os.path.join(base_dir, "images", f"{sinf}.jpg")
+
+    # Maktabdagi parallel sinflar
+    parallel = {
+        "5": ["5-01", "5-02"],
+        "6": ["6-01", "6-02"],
+        "7": ["7-01", "7-02", "7-03"],
+        "8": ["8-01", "8-02", "8-03"],
+        "9": ["9-01", "9-02", "9-03"],
+        "10": ["10-01", "10-02", "10-03"],
+        "11": ["11-01", "11-02", "11-03"],
+    }
+
+    waiting_for_class_group[chat_id] = sinf
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for p in parallel[sinf]:
+        markup.add(types.KeyboardButton(p))
+
+    bot.send_message(chat_id, "Siz qaysi sinfnikini hohlaysiz?", reply_markup=markup)
+
+
+# Parallel sinfni tanlaganda → rasm yuborish
+@bot.message_handler(func=lambda m: "-" in m.text and m.text.count("-") == 1)
+def send_class_image(message):
+    chat_id = message.chat.id
+    sinf = message.text  # Masalan: "7-02"
+
+    image_path = f"images/{sinf}.jpg"
 
     try:
         with open(image_path, "rb") as photo:
-            bot.send_photo(message.chat.id, photo, caption=f"{sinf}-sinf dars jadvali 📚")
+            bot.send_photo(chat_id, photo, caption=f"{sinf} dars jadvali 📚")
     except FileNotFoundError:
-        bot.send_message(message.chat.id, "Bu sinf uchun dars jadvali hali yuklanmagan.")
+        bot.send_message(chat_id, "Kechirasiz, bu sinfning dars jadvali hali yuklanmagan.")
+
 
 bot.infinity_polling()
