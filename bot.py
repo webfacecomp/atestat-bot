@@ -127,6 +127,76 @@ def not_student(message):
     bot.send_message(chat_id, "Tanlang:", reply_markup=markup)
 
 
+
+# ================================
+# DARS JADVALI – SINF TANLASH
+# ================================
+@bot.message_handler(func=lambda m: m.text in ["Dars jadvali 📑", "Расписание уроков 📑"])
+def ask_class(message):
+    chat_id = message.chat.id
+    lang = user_lang.get(chat_id, "uz")
+    user_stage[chat_id] = "choose_class"
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
+    for c in classes:
+        markup.add(c)
+
+    text = "Выберите класс:" if lang == "ru" else "Siz nechinchi sinfsiz?"
+    bot.send_message(chat_id, text, reply_markup=markup)
+
+
+# ================================
+# GURUHLAR RO‘YXATI
+# ================================
+groups = {
+    "5": ["5-01", "5-02"],
+    "6": ["6-01", "6-02"],
+    "7": ["7-01", "7-02", "7-03"],
+    "8": ["8-01", "8-02", "8-03"],
+    "9": ["9-01", "9-02", "9-03"],
+    "10": ["10-01", "10-02", "10-03"],
+    "11": ["11-01", "11-02", "11-03"],
+}
+
+
+# ================================
+# SINF TANLANGANDA — GURUH TANLASH
+# ================================
+@bot.message_handler(func=lambda m: m.text in ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"])
+def choose_group(message):
+    chat_id = message.chat.id
+    sinf = message.text.replace("-sinf", "")
+    user_class[chat_id] = sinf
+    user_stage[chat_id] = "choose_group"
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    for g in groups[sinf]:
+        markup.add(g)
+
+    lang = user_lang.get(chat_id, "uz")
+    text = "Выберите группу:" if lang == "ru" else "Siz qaysi guruhsiz?"
+    bot.send_message(chat_id, text, reply_markup=markup)
+
+
+# ================================
+# RASM YUBORISH
+# ================================
+@bot.message_handler(func=lambda m: m.text in sum(groups.values(), []))
+def send_schedule(message):
+    chat_id = message.chat.id
+    group = message.text
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    image_path = os.path.join(base_dir, "images", f"{group}.jpg")
+
+    try:
+        with open(image_path, "rb") as img:
+            bot.send_photo(chat_id, img, caption=f"{group} dars jadvali 📚")
+    except FileNotFoundError:
+        bot.send_message(chat_id, "Dars jadvali mavjud emas.")
+
+
+
 # ============================================
 # UNIVERSAL — BEKOR QILISH & BOSHLANG‘ICH MENYU
 # ============================================
