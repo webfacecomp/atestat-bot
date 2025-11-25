@@ -11,10 +11,13 @@ user_role = {}
 # --------------------------
 #  START — Til so'rash
 # --------------------------
+
 @bot.message_handler(commands=['start'])
 def start(message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(types.KeyboardButton("Rus 🇷🇺"), types.KeyboardButton("Uzb 🇺🇿"))
+    rus = types.KeyboardButton("Rus 🇷🇺")
+    uzb = types.KeyboardButton("Uzb 🇺🇿")
+    markup.add(rus, uzb)
 
     bot.send_message(
         message.chat.id,
@@ -22,30 +25,32 @@ def start(message):
         reply_markup=markup
     )
 
-# --------------------------
-#  Til tanlandi → rol tanlash
-# --------------------------
 @bot.message_handler(func=lambda m: m.text in ["Rus 🇷🇺", "Uzb 🇺🇿"])
 def choose_lang(message):
     chat_id = message.chat.id
 
     if message.text == "Rus 🇷🇺":
         user_lang[chat_id] = "ru"
-        bot.send_message(chat_id, "Вы выбрали русский язык.")
+
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(types.KeyboardButton("Учитель 👨‍🏫"), types.KeyboardButton("Ученик 👨‍🎓"))
-        bot.send_message(chat_id, "Вы учитель или ученик?", reply_markup=markup)
+        teacher = types.KeyboardButton("Учитель 👨‍🏫")
+        student = types.KeyboardButton("Ученик 👨‍🎓")
+        markup.add(teacher, student)
+
+        bot.send_message(chat_id, "Вы выбрали русский язык.", reply_markup=markup)
+        bot.send_message(chat_id, "Вы учитель или ученик?")
 
     else:
         user_lang[chat_id] = "uz"
-        bot.send_message(chat_id, "Siz o‘zbek tilini tanladingiz.")
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add(types.KeyboardButton("O‘qituvchi 👨‍🏫"), types.KeyboardButton("O‘quvchi 👨‍🎓"))
-        bot.send_message(chat_id, "Siz o‘qituvchimisiz yoki o‘quvchi?", reply_markup=markup)
 
-# --------------------------
-# Rol tanlandi → Asosiy menyuga o'tish
-# --------------------------
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        teacher = types.KeyboardButton("O‘qituvchi 👨‍🏫")
+        student = types.KeyboardButton("O‘quvchi 👨‍🎓")
+        markup.add(teacher, student)
+
+        bot.send_message(chat_id, "Siz o‘zbek tilini tanladingiz.", reply_markup=markup)
+        bot.send_message(chat_id, "Siz o‘qituvchimisiz yoki o‘quvchi?")
+
 @bot.message_handler(func=lambda m: m.text in [
     "Учитель 👨‍🏫", "Ученик 👨‍🎓",
     "O‘qituvchi 👨‍🏫", "O‘quvchi 👨‍🎓"
@@ -54,21 +59,26 @@ def role_chosen(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
 
-    user_role[chat_id] = message.text  # role saqlab qo'yiladi
-
-    # Asosiy menyu tugmalari
-    menu = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    menu.add(
-        types.KeyboardButton("📚 Dars jadvali"),
-        types.KeyboardButton("🧠 ChSB demo"),
-        types.KeyboardButton("📝 IQ savollar"),
-        types.KeyboardButton("📘 Fan testlari")
-    )
+    # Keyingi menyu
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
     if lang == "ru":
-        bot.send_message(chat_id, "Чем я могу вам помочь?", reply_markup=menu)
+        schedule = types.KeyboardButton("Расписание уроков 🗓")
+        chsb = types.KeyboardButton("ЧСБ демо ⚙️")
+        iq = types.KeyboardButton("IQ вопросы 🧠")
+        test = types.KeyboardButton("Предметные тесты 📘")
+        markup.add(schedule, chsb, iq, test)
+
+        bot.send_message(chat_id, "Чем могу помочь?", reply_markup=markup)
+
     else:
-        bot.send_message(chat_id, "Mendan sizga qanday yordam kerak?", reply_markup=menu)
+        schedule = types.KeyboardButton("Dars jadvali 🗓")
+        chsb = types.KeyboardButton("ChSB demo ⚙️")
+        iq = types.KeyboardButton("IQ savollar 🧠")
+        test = types.KeyboardButton("Fan testlari 📘")
+        markup.add(schedule, chsb, iq, test)
+
+        bot.send_message(chat_id, "Mendan sizga qanday yordam kerak?", reply_markup=markup)
 
 # --------------------------
 #  Asosiy menyu → Dars jadvali bosilganda
