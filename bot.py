@@ -97,7 +97,7 @@ def ask_class(message):
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    classes = ["5", "6", "7", "8", "9", "10", "11"]
+    classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
     for c in classes:
         markup.add(c)
 
