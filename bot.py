@@ -162,18 +162,21 @@ def send_schedule(message):
 def send_test(message):
     keyboard = types.InlineKeyboardMarkup()
     btn = types.InlineKeyboardButton(
-        text="Bos!",
+        text="Etiroz yuborish ✍🏼",
         callback_data="test_clicked"
     )
     keyboard.add(btn)
 
-    bot.send_message(message.chat.id, "Callback tugmasi:", reply_markup=keyboard)
+    bot.send_message(message.chat.id, "Agar bot haqida etirozlaringiz bolsa pastni bosing 👇🏼", reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "test_clicked")
 def callback_handler(call):
     bot.answer_callback_query(call.id)
-    bot.send_message(call.message.chat.id, "Callback tugmasi bosildi!")
+    
+    # Sizning shaxsiy Telegram akkauntingizga xabar yuborish
+    my_telegram_id = 6894161022  # bu yerga o'zingizning ID ni yozing
+    bot.send_message(my_telegram_id, f"Foydalanuvchi @{call.from_user.username} callback tugmasini bosdi!")
 
 
 # ================================
