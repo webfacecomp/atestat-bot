@@ -1,13 +1,36 @@
 import os
 import telebot
 from telebot import types
+from aiogram import types
+from aiogram.utils.callback_data import CallbackData
+
 
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
+my_callback = CallbackData("menu", "action")
+
+
 user_lang = {}       # chat_id → "uz" yoki "ru"
 user_grade = {}      # chat_id → "5"
 user_parallel = {}   # chat_id → "5-01"
+
+@dp.message_handler(commands=['test'])
+async def send_test_buttons(message: types.Message):
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(
+        types.InlineKeyboardButton(
+            text="Bos!",
+            callback_data=my_callback.new(action="clicked")
+        )
+    )
+    await message.answer("Tugmani bos!", reply_markup=keyboard)
+
+
+@dp.callback_query_handler(my_callback.filter(action="clicked"))
+async def process_callback(query: types.CallbackQuery):
+    await query.answer()
+    await query.message.answer("Callback tugmasi bosildi!")
 
 # -------------------- START -----------------------------
 @bot.message_handler(commands=['start'])
