@@ -7,6 +7,7 @@ print("TOKEN VALUE >>>", repr(TOKEN))
 bot = telebot.TeleBot(TOKEN)
 
 user_lang = {}
+waiting_for_class_group = {}   # sinf → parallel sinf tanlash holatini saqlaydi
 
 @bot.message_handler(commands=['start'])
 def start(message):
