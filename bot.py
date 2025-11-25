@@ -40,16 +40,16 @@ def choose_lang(message):
         msg = "Вы выбрали русский язык."
         role_text = "Вы учитель или ученик?"
 
-        teacher = "Учитель 👨‍🏫"
-        student = "Ученик 👨‍🎓"
+        teacher = "Учитель 👨🏻‍🏫"
+        student = "Ученик 🧑🏻‍🎓"
 
     else:
         user_lang[chat_id] = "uz"
         msg = "Siz o‘zbek tilini tanladingiz."
         role_text = "Siz o‘qituvchimisiz yoki o‘quvchi?"
 
-        teacher = "O‘qituvchi 👨‍🏫"
-        student = "O‘quvchi 👨‍🎓"
+        teacher = "O‘qituvchi 👨🏻‍🏫"
+        student = "O‘quvchi 🧑🏻‍🎓"
 
     bot.send_message(chat_id, msg)
 
@@ -63,8 +63,8 @@ def choose_lang(message):
 # ROLE TANLANGANDA — ASOSIY MENYU
 # ================================
 @bot.message_handler(func=lambda m: m.text in [
-    "Учитель 👨‍🏫", "Ученик 👨‍🎓",
-    "O‘qituvchi 👨‍🏫", "O‘quvchi 👨‍🎓"
+    "Учитель 👨🏻‍🏫", "Ученик 🧑🏻‍🎓",
+    "O‘qituvchi 👨🏻‍🏫", "O‘quvchi 🧑🏻‍🎓"
 ])
 def role_chosen(message):
     chat_id = message.chat.id
@@ -74,13 +74,13 @@ def role_chosen(message):
         bot.send_message(chat_id, "Как я могу помочь вам?")
 
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("Расписание уроков", "ЧСБ демо", "IQ вопросы", "Тесты по предметам")
+        markup.add("Расписание уроков 📑", "ЧСБ демо 📝", "IQ вопросы 🧠", "Тесты по предметам 🔖")
 
     else:
         bot.send_message(chat_id, "Menga sizga qanday yordam kerak?")
 
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        markup.add("Dars jadvali", "ChSB demo", "IQ savollar", "Fan testlari")
+        markup.add("Dars jadvali 📑", "ChSB demo 📝", "IQ savollar 🧠", "Fan testlari 🔖")
 
     bot.send_message(chat_id, "Quyidagilardan birini tanlang:", reply_markup=markup)
 
@@ -97,7 +97,7 @@ def ask_class(message):
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 
-    classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
+    classes = ["5", "6", "7", "8", "9", "10", "11"]
     for c in classes:
         markup.add(c)
 
@@ -167,7 +167,8 @@ def send_test(message):
     )
     keyboard.add(btn)
 
-    bot.send_message(message.chat.id, "Agar bot haqida etirozlaringiz bolsa pastni bosing 👇🏼", reply_markup=keyboard)
+    bot.send_message(message.chat.id, "Agar bot haqida etirozlaringiz bolsa pastni bosing 👇🏼."
+    "Men tez orada sizga javob qaytaraman!", reply_markup=keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "test_clicked")
