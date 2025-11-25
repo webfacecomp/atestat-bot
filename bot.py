@@ -23,6 +23,11 @@ def start(message):
         reply_markup=markup
     )
 
+
+@bot.message_handler(commands=['callback'])
+def send(message):
+    send mess="Etirozlaringiz bolsa menga murojat qiling! @khakimovvd"
+
 # -------------------- TIL TANLASH -----------------------------
 @bot.message_handler(func=lambda m: m.text in ["Uzb 🇺🇿", "Rus 🇷🇺"])
 def choose_lang(message):
