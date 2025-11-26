@@ -465,10 +465,7 @@ def universal_restart(message):
     bot.reply_to(message, "Bot qayta ishga tushirilmoqda...")
     print(f"[RESTART] {message.from_user.first_name} ({message.from_user.id}) botni restart qildi!")
 
-    # 1.5 soniya kutib, xabar yetib borishi uchun
-    threading.Thread(target=lambda: (
-        os._exit(0)
-    )).start()
+
 
 # ============================================================
 # BOT ISHGA TUSHIRISH
