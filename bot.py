@@ -209,7 +209,27 @@ def send_schedule(message):
         bot.send_message(chat_id, "Dars jadvali mavjud emas.")
 
 # ============================================================
-# O‘QITUVCHI BO‘LIMI — YEARLY PLAN
+#   O‘QITUVCHI BO‘LIMI — YILLIK DARS REJASI
+# ============================================================
+
+# Teacher uchun vaqtinchalik saqlovchi maydonlar
+teacher_mode = {}
+teacher_step = {}
+teacher_class = {}
+teacher_group = {}
+
+# BOSHQARILADIGAN FUNKSIYA
+def teacher_cancel_buttons(lang):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    if lang == "ru":
+        markup.add("Отмена ↩️", "Главное меню ⏪")
+    else:
+        markup.add("Bekor qilish ↩️", "Bosh menyu ⏪")
+    return markup
+
+
+# ============================================================
+#   1-QADAM – YILLIK REJA MENYUSI
 # ============================================================
 
 @bot.message_handler(func=lambda m: user_role.get(m.chat.id) == "teacher" and m.text in [
@@ -227,10 +247,9 @@ def teacher_start_plan(message):
     for c in ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]:
         markup.add(c)
 
-    markup.add(
-        "Bekor qilish ↩️" if lang == "uz" else "Отмена ↩️",
-        "Bosh menyu ⏪" if lang == "uz" else "Главное меню ⏪"
-    )
+    # Cancel & Main Menu
+    for b in teacher_cancel_buttons(lang).keyboard:
+        markup.keyboard.append(b)
 
     bot.send_message(
         chat_id,
@@ -238,15 +257,21 @@ def teacher_start_plan(message):
         reply_markup=markup
     )
 
+
+# ============================================================
+#   2-QADAM – PARALLEL (5-01, 7-03 …)
+# ============================================================
+
 @bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id) and teacher_step.get(m.chat.id) == "class")
 def teacher_choose_group(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
+    text = message.text
 
-    if not message.text.endswith("-sinf"):
+    if not text.endswith("-sinf"):
         return
 
-    sinf = message.text.replace("-sinf", "")
+    sinf = text.replace("-sinf", "")
     teacher_class[chat_id] = sinf
     teacher_step[chat_id] = "group"
 
@@ -254,10 +279,9 @@ def teacher_choose_group(message):
     for g in groups[sinf]:
         markup.add(g)
 
-    markup.add(
-        "Bekor qilish ↩️" if lang == "uz" else "Отмена ↩️",
-        "Bosh menyu ⏪" if lang == "uz" else "Главное меню ⏪"
-    )
+    # Cancel & Main Menu
+    for b in teacher_cancel_buttons(lang).keyboard:
+        markup.keyboard.append(b)
 
     bot.send_message(
         chat_id,
@@ -265,31 +289,37 @@ def teacher_choose_group(message):
         reply_markup=markup
     )
 
+
+# ============================================================
+#   3-QADAM – FANLARNI TANLASH (dinamik)
+# ============================================================
+
 @bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id) and teacher_step.get(m.chat.id) == "group")
 def teacher_choose_subject(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
+    text = message.text
 
-    if message.text not in sum(groups.values(), []):
+    if text not in sum(groups.values(), []):
         return
 
-    group = message.text
+    group = text
     sinf = int(teacher_class.get(chat_id))
 
     teacher_group[chat_id] = group
     teacher_step[chat_id] = "subject"
 
-    # SUBJECT LOGIC
+    # FANNI DINAMIK TANLASH 
     subjects = ["Inglis tili", "Rus tili", "Ona tili", "Adabiyot", "Geografiya", "Biologiya"]
 
     if sinf < 7:
         subjects.insert(0, "Matematika")
-        subjects.insert(4, "Tarix")
+        subjects.insert(3, "Tarix")
     else:
         subjects = [
             "Algebra", "Geometriya",
             "Inglis tili", "Rus tili", "Ona tili",
-            "O‘zbekiston tarixi", "Jahon tarixi",
+            "O'zbekiston tarixi", "Jahon tarixi",
             "Adabiyot", "Geografiya", "Biologiya", "Fizika"
         ]
 
@@ -299,10 +329,9 @@ def teacher_choose_subject(message):
 
     markup.add("Menga kerakli fan yo‘q ❗")
 
-    markup.add(
-        "Bekor qilish ↩️" if lang == "uz" else "Отмена ↩️",
-        "Bosh menyu ⏪" if lang == "uz" else "Главное меню ⏪"
-    )
+    # Cancel & Main Menu
+    for b in teacher_cancel_buttons(lang).keyboard:
+        markup.keyboard.append(b)
 
     bot.send_message(
         chat_id,
@@ -310,9 +339,19 @@ def teacher_choose_subject(message):
         reply_markup=markup
     )
 
+
+# ============================================================
+#   “Fan yo‘q” – maxsus xabar
+# ============================================================
+
 @bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id) and m.text == "Menga kerakli fan yo‘q ❗")
 def teacher_missing_subject(message):
     bot.send_message(message.chat.id, "Bu fan tez orada qo‘shiladi ⏳!")
+
+
+# ============================================================
+#   4-QADAM – FAN TANLANGANDA YAKUNIY HABAR
+# ============================================================
 
 @bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id) and teacher_step.get(m.chat.id) == "subject")
 def teacher_subject_result(message):
@@ -323,11 +362,14 @@ def teacher_subject_result(message):
 
     bot.send_message(
         chat_id,
-        f"{sinf}-{group} uchun `{subject}` bo‘yicha yillik reja tez orada qo‘shiladi ⏳!"
+        f"{sinf}-{group} sinf uchun *{subject}* fanidan yillik dars rejasi tez orada qo‘shiladi ⏳!",
+        parse_mode="Markdown"
     )
 
+    # Reset
     teacher_mode[chat_id] = False
     teacher_step[chat_id] = None
+
 
 # ============================================================
 # CALLBACK → SHAXSIY TELEGRAM LINK
