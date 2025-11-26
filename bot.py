@@ -435,7 +435,7 @@ def teacher_subject_result(message):
     sinf = teacher_class.get(chat_id)
     group = teacher_group.get(chat_id)
     
-    text = f"{sinf}-{group} sinf uchun *{subject}* fanidan yillik dars rejasi tez orada qo‘shiladi ⏳!" if lang == "uz" else f"Годовой план по *{subject}* для {sinf}-{group} класса будет добавлен в ближайшее время ⏳!"
+    text = f"{group} sinf uchun *{subject}* fanidan yillik dars rejasi tez orada qo‘shiladi ⏳!" if lang == "uz" else f"Годовой план по *{subject}* для {sinf}-{group} класса будет добавлен в ближайшее время ⏳!"
     bot.send_message(chat_id, text, parse_mode="Markdown")
     
     teacher_cancel(message)
@@ -452,4 +452,35 @@ def send_test(message):
 # BOT START
 # ============================================================
 if __name__ == "__main__":
+
+# ============================================================
+# UMUMIY RESTART – HAR KIM ISHLATA OLADI
+# ============================================================
+
+@bot.message_handler(commands=['restart'])
+def restart_command(message):
+    bot.reply_to(message, "Bot qayta ishga tushirilmoqda...")
+    print(f"[RESTART] {message.from_user.first_name} ({message.from_user.id}) botni restart qildi!")
+
+    # Botni to‘xtatib, Pythonni qaytadan ishga tushirish
+    import os
+    import sys
+    import time
+    time.sleep(1)                    # javob yetib borishi uchun
+    bot.stop_polling()
+    os.execv(sys.executable, ['python'] + sys.argv)
+
+# ============================================================
+# BOTNI ISHGA TUSHIRISH
+# ============================================================
+if __name__ == "__main__":
+    print("Bot ishga tushdi...")
+    try:
+        bot.infinity_polling()
+    except Exception as e:
+        print("Xatolik:", e)
+        # Agar polling o‘lsa ham qayta ishga tushadi
+        import time
+        time.sleep(5)
+        os.execv(sys.executable, ['python'] + sys.argv)
     bot.infinity_polling()
