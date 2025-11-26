@@ -454,33 +454,33 @@ def send_test(message):
 if __name__ == "__main__":
 
 # ============================================================
-# UMUMIY RESTART – HAR KIM ISHLATA OLADI
+# UNIVERSAL RESTART – HAR QANDAY HOSTINGDA ISHLAYDI
 # ============================================================
 
+ import threading
+import os
+
 @bot.message_handler(commands=['restart'])
-def restart_command(message):
+def universal_restart(message):
     bot.reply_to(message, "Bot qayta ishga tushirilmoqda...")
     print(f"[RESTART] {message.from_user.first_name} ({message.from_user.id}) botni restart qildi!")
 
-    # Botni to‘xtatib, Pythonni qaytadan ishga tushirish
-    import os
-    import sys
-    import time
-    time.sleep(1)                    # javob yetib borishi uchun
-    bot.stop_polling()
-    os.execv(sys.executable, ['python'] + sys.argv)
+    # 1.5 soniya kutib, xabar yetib borishi uchun
+    threading.Thread(target=lambda: (
+        os._exit(0)
+    )).start()
 
 # ============================================================
-# BOTNI ISHGA TUSHIRISH
+# BOT ISHGA TUSHIRISH
 # ============================================================
 if __name__ == "__main__":
     print("Bot ishga tushdi...")
     try:
-        bot.infinity_polling()
-    except Exception as e:
-        print("Xatolik:", e)
-        # Agar polling o‘lsa ham qayta ishga tushadi
+        bot.infinity_polling(none_stop=True, interval=0)
+    except:
+        print("Bot to‘xtadi, 5 soniyadan keyin qayta ishga tushadi...")
         import time
         time.sleep(5)
-        os.execv(sys.executable, ['python'] + sys.argv)
+        os.execv(__file__, ['python'] + [__file__])
+
     bot.infinity_polling()
