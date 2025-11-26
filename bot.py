@@ -142,11 +142,11 @@ def choose_lang(message):
     ask = "Вы учитель или ученик?" if lang == "ru" else "Siz o‘qituvchimisiz yoki o‘quvchi?"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     if lang == "ru":
-        markup.add("Я хочу получить информацию о школе.")
+        markup.add("Информация о школе")
         markup.add("Ученик 🧑🏻‍🎓")
         markup.add("Учитель 👨🏻‍🏫")
     else:
-        markup.add("Maktab bilan tanishmoqchiman")
+        markup.add("Maktab haqida ma'lumot")
         markup.add("O‘quvchi 🧑🏻‍🎓")
         markup.add("O‘qituvchi 👨🏻‍🏫")
     bot.send_message(chat_id, ask, reply_markup=markup)
@@ -167,7 +167,7 @@ def role_chosen(message):
         # message_id: kanal ichidagi real message ID (siz o'zingiz bilasiz, misol uchun 1 - birinchi post).
         # Bot kanal admini bo'lishi kerak yoki public bo'lsa ishlaydi.
         # ############################################################################################
-        from_chat_id = "@kh_journey"  # Kanal username yoki ID
+        from_chat_id = "@ChortoqTIM"  # Kanal username yoki ID
         message_id = 1  # Kanal ichidagi message ID (real ID ni qo'ying, masalan, kanal postidan oling)
         
         try:
@@ -435,7 +435,7 @@ def teacher_subject_result(message):
     sinf = teacher_class.get(chat_id)
     group = teacher_group.get(chat_id)
     
-    text = f"{group} sinf uchun *{subject}* fanidan yillik dars rejasi tez orada qo‘shiladi ⏳!" if lang == "uz" else f"Годовой план по *{subject}* для {sinf}-{group} класса будет добавлен в ближайшее время ⏳!"
+    text = f"{sinf}-{group} sinf uchun *{subject}* fanidan yillik dars rejasi tez orada qo‘shiladi ⏳!" if lang == "uz" else f"Годовой план по *{subject}* для {sinf}-{group} класса будет добавлен в ближайшее время ⏳!"
     bot.send_message(chat_id, text, parse_mode="Markdown")
     
     teacher_cancel(message)
@@ -449,15 +449,10 @@ def send_test(message):
     bot.send_message(chat_id, "Agar bot haqida e’tirozlaringiz bo‘lsa pastdagi tugmani bosing 👇🏼", reply_markup=get_feedback_inline())
 
 # ============================================================
-# BOT START
-# ============================================================
-if __name__ == "__main__":
-
-# ============================================================
 # UNIVERSAL RESTART – HAR QANDAY HOSTINGDA ISHLAYDI
 # ============================================================
 
- import threading
+import threading
 import os
 
 @bot.message_handler(commands=['restart'])
@@ -471,7 +466,7 @@ def universal_restart(message):
     )).start()
 
 # ============================================================
-# BOT ISHGA TUSHIRISH
+# BOT START
 # ============================================================
 if __name__ == "__main__":
     print("Bot ishga tushdi...")
@@ -482,5 +477,3 @@ if __name__ == "__main__":
         import time
         time.sleep(5)
         os.execv(__file__, ['python'] + [__file__])
-
-    bot.infinity_polling()
