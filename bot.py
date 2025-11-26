@@ -142,11 +142,11 @@ def choose_lang(message):
     ask = "Вы учитель или ученик?" if lang == "ru" else "Siz o‘qituvchimisiz yoki o‘quvchi?"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     if lang == "ru":
-        markup.add("Информация о школе")
+        markup.add("Я хочу получить информацию о школе.")
         markup.add("Ученик 🧑🏻‍🎓")
         markup.add("Учитель 👨🏻‍🏫")
     else:
-        markup.add("Maktab haqida ma'lumot")
+        markup.add("Maktab bilan tanishmoqchiman")
         markup.add("O‘quvchi 🧑🏻‍🎓")
         markup.add("O‘qituvchi 👨🏻‍🏫")
     bot.send_message(chat_id, ask, reply_markup=markup)
@@ -167,7 +167,7 @@ def role_chosen(message):
         # message_id: kanal ichidagi real message ID (siz o'zingiz bilasiz, misol uchun 1 - birinchi post).
         # Bot kanal admini bo'lishi kerak yoki public bo'lsa ishlaydi.
         # ############################################################################################
-        from_chat_id = "@ChortoqTIM"  # Kanal username yoki ID
+        from_chat_id = "@kh_journey"  # Kanal username yoki ID
         message_id = 1  # Kanal ichidagi message ID (real ID ni qo'ying, masalan, kanal postidan oling)
         
         try:
