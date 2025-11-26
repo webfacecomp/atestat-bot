@@ -126,7 +126,6 @@ def start(message):
     markup.add("Rus 🇷🇺")
     markup.add("Uzb 🇺🇿")
     bot.send_message(chat_id, text, reply_markup=markup)
-    bot.send_message(chat_id, "Agar bot haqida e’tirozlaringiz bo‘lsa pastdagi tugmani bosing 👇🏼", reply_markup=get_feedback_inline())
 
 # ============================================================
 # LANGUAGE SELECTED → ROLE SELECT
@@ -143,11 +142,11 @@ def choose_lang(message):
     ask = "Вы учитель или ученик?" if lang == "ru" else "Siz o‘qituvchimisiz yoki o‘quvchi?"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     if lang == "ru":
-        markup.add("New")
+        markup.add("Информация о школе")
         markup.add("Ученик 🧑🏻‍🎓")
         markup.add("Учитель 👨🏻‍🏫")
     else:
-        markup.add("New")
+        markup.add("Maktab haqida ma'lumot")
         markup.add("O‘quvchi 🧑🏻‍🎓")
         markup.add("O‘qituvchi 👨🏻‍🏫")
     bot.send_message(chat_id, ask, reply_markup=markup)
@@ -155,23 +154,36 @@ def choose_lang(message):
 # ============================================================
 # ROLE CHOSEN → MENU
 # ============================================================
-@bot.message_handler(func=lambda m: m.text in ["New", "Учитель 👨🏻‍🏫", "O‘qituvchi 👨🏻‍🏫", "Ученик 🧑🏻‍🎓", "O‘quvchi 🧑🏻‍🎓"])
+@bot.message_handler(func=lambda m: m.text in ["Информация о школе", "Maktab haqida ma'lumot", "Учитель 👨🏻‍🏫", "O‘qituvchi 👨🏻‍🏫", "Ученик 🧑🏻‍🎓", "O‘quvchi 🧑🏻‍🎓"])
 def role_chosen(message):
     chat_id = message.chat.id
     lang = user_lang.get(chat_id, "uz")
 
-    if message.text == "New":
-        bot.send_message(chat_id, "Yangiliklar uchun kanalga o'ting!" if lang == "uz" else "Перейдите в канал для новостей!")
-        bot.send_message(chat_id, "https://t.me/ChortoqTIM")
+    if message.text in ["Информация о школе", "Maktab haqida ma'lumot"]:
+        # ############################################################################################
+        # Bu funksiya: "Maktab haqida ma'lumot" tugmasi bosilganda ishlaydi.
+        # Kanaldan message forward qilish (kanal ichiga "kirgizish" uchun).
+        # from_chat_id: kanal username yoki ID (masalan, "@ChortoqTIM" yoki -100XXXXXXX).
+        # message_id: kanal ichidagi real message ID (siz o'zingiz bilasiz, misol uchun 1 - birinchi post).
+        # Bot kanal admini bo'lishi kerak yoki public bo'lsa ishlaydi.
+        # ############################################################################################
+        from_chat_id = "@ChortoqTIM"  # Kanal username yoki ID
+        message_id = 1  # Kanal ichidagi message ID (real ID ni qo'ying, masalan, kanal postidan oling)
+        
+        try:
+            bot.forward_message(chat_id=chat_id, from_chat_id=from_chat_id, message_id=message_id)
+        except Exception as e:
+            bot.send_message(chat_id, f"Xato: {e}. Kanal ma'lumotini yuklab bo'lmadi.")
+        
         # Qayta rol tanlash uchun
         ask = "Вы учитель или ученик?" if lang == "ru" else "Siz o‘qituvchimisiz yoki o‘quvchi?"
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
         if lang == "ru":
-            markup.add("New")
+            markup.add("Информация о школе")
             markup.add("Ученик 🧑🏻‍🎓")
             markup.add("Учитель 👨🏻‍🏫")
         else:
-            markup.add("New")
+            markup.add("Maktab haqida ma'lumot")
             markup.add("O‘quvchi 🧑🏻‍🎓")
             markup.add("O‘qituvchi 👨🏻‍🏫")
         bot.send_message(chat_id, ask, reply_markup=markup)
@@ -196,11 +208,11 @@ def not_student(message):
     lang = user_lang.get(chat_id, "uz")
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     if lang == "ru":
-        markup.add("New")
+        markup.add("Информация о школе")
         markup.add("Ученик 🧑🏻‍🎓")
         markup.add("Учитель 👨🏻‍🏫")
     else:
-        markup.add("New")
+        markup.add("Maktab haqida ma'lumot")
         markup.add("O‘quvchi 🧑🏻‍🎓")
         markup.add("O‘qituvchi 👨🏻‍🏫")
     text = "Выберите роль снова." if lang == "ru" else "Rolni qaytadan tanlang."
