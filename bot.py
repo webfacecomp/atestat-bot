@@ -9,7 +9,10 @@ bot = telebot.TeleBot(TOKEN)
 user_lang = {}      # ru / uz
 user_role = {}      # student / teacher
 user_stage = {}     # qaysi bosqichda
-user_class = {}     # sinf
+user_class = {}     # sinf 
+teacher_stage = {}
+teacher_class = {}
+teacher_group = {}
 
 # ============================================
 # /start — TIL TANLASH
@@ -109,9 +112,6 @@ def role_chosen(message):
 # O‘QITUVCHILAR: YILLIK DARS REJASI BO‘LIMI
 # ============================================================
 
-teacher_stage = {}
-teacher_class = {}
-teacher_group = {}
 
 # O‘QITUVCHI MENYUSIGA YANGI COMMAND QO‘SHISH
 @bot.message_handler(func=lambda m: m.text in ["Учитель 👨🏻‍🏫", "O‘qituvchi 👨🏻‍🏫"])
