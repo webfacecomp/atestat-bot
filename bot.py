@@ -212,12 +212,6 @@ def send_schedule(message):
 #   O‘QITUVCHI BO‘LIMI — YILLIK DARS REJASI
 # ============================================================
 
-# Teacher uchun vaqtinchalik saqlovchi maydonlar
-teacher_mode = {}
-teacher_step = {}
-teacher_class = {}
-teacher_group = {}
-
 # BOSHQARILADIGAN FUNKSIYA
 def teacher_cancel_buttons(lang):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
