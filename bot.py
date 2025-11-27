@@ -450,30 +450,15 @@ def send_test(message):
     bot.send_message(chat_id, "Agar bot haqida e’tirozlaringiz bo‘lsa pastdagi tugmani bosing 👇🏼", reply_markup=get_feedback_inline())
 
 # ============================================================
-# XAVFSIZ RESTART – FAQAT ADMIN UCHUN (TASODIFAN O‘CHIRILMAYDI!)
+# UNIVERSAL RESTART – HAR QANDAY HOSTINGDA ISHLAYDI
 # ============================================================
 
-# <<< BU YERGA O‘Z ID’ingizni yozing! >>>
-# Qanday bilasiz? @userinfobot ga yozing → sizning ID’ingiz chiqadi
-ADMIN_ID = 6894161022   # <<< BU YERNI O‘ZGARTIRING!!! (masalan: 712345678)
-
 @bot.message_handler(commands=['restart'])
-def safe_restart(message):
-    user_id = message.from_user.id
-    
-    # Faqat admin ishlatishi mumkin
-    if user_id != ADMIN_ID:
-        bot.reply_to(message, "❌ Bu buyruq faqat bot egasiga ochiq!")
-        print(f"[XAVFSIZLIK] {message.from_user.first_name} ({user_id}) /restart urinib ko‘rdi!")
-        return
-    
-    # Admin bo‘lsa → restart
-    bot.reply_to(message, "Bot qayta ishga tushirilmoqda...\nXotira tozalanmoqda...")
-    print(f"[RESTART] Bot egasi ({user_id}) botni restart qildi!")
+def universal_restart(message):
+    bot.reply_to(message, "Bot qayta ishga tushirilmoqda...")
+    print(f"[RESTART] {message.from_user.first_name} ({message.from_user.id}) botni restart qildi!")
 
-    # 3 soniya kutib, xabar yetib borishi uchun
-    import threading
-    import os
+    # 1.5 soniya kutib, xabar yetib borishi uchun
     threading.Thread(target=lambda: (
         os._exit(0)
     )).start()
@@ -485,10 +470,8 @@ if __name__ == "__main__":
     print("Bot ishga tushdi...")
     try:
         bot.infinity_polling(none_stop=True, interval=0)
-    except Exception as e:
-        print(f"Xato: {e}")
+    except:
+        print("Bot to‘xtadi, 5 soniyadan keyin qayta ishga tushadi...")
         import time
         time.sleep(5)
         os.execv(__file__, ['python'] + [__file__])
-        
-    bot.infinity_polling()
