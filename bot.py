@@ -475,3 +475,5 @@ if __name__ == "__main__":
         import time
         time.sleep(5)
         os.execv(__file__, ['python'] + [__file__])
+
+bot.infinity_polling()
