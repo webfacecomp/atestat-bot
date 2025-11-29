@@ -1,35 +1,30 @@
 import os
-import sys
 import telebot
 from telebot import types
-from tinydb import TinyDB, Query
 import threading
 
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
-db = TinyDB('users.json')
-User = Query()
+# ============================================================
+# USER DATA
+# ============================================================
+user_lang = {}
+user_role = {}
+user_stage = {}
+user_class = {}
 
-def get_user(chat_id):
-    u = db.get(User.chat_id == chat_id)
-    return u if u else {}
+# TEACHER STATES
+teacher_mode = {}
+teacher_step = {}
+teacher_class = {}
+teacher_group = {}
 
-def save_user(chat_id, data: dict):
-    u = get_user(chat_id)
-    if not u:
-        data["chat_id"] = chat_id
-        db.insert(data)
-    else:
-        u.update(data)
-        db.update(u, User.chat_id == chat_id)
+# ============================================================
+# KONFIGURATSIYALAR (BITTA JOYDA!)
+# ============================================================
 
-
-PHONE_DATABASE = {
-    "+998901234567": {"ism": "Test User 1"},
-    "+998997654321": {"ism": "Test User 2"},
-}
-
+# Universal groups dict (ikkalasiga ham ishlatiladi)
 groups = {
     "5": ["5-01", "5-02"],
     "6": ["6-01", "6-02"],
@@ -40,539 +35,445 @@ groups = {
     "11": ["11-01", "11-02"]
 }
 
+# Fanlar
 subjects_uz = {
-    "<7": ["Matematika", "Inglis tili", "Rus tili", "Ona tili", "Tarix",
-           "Adabiyot", "Geografiya", "Biologiya"],
+    "<7": ["Matematika", "Inglis tili", "Rus tili", "Ona tili", "Tarix", "Adabiyot", "Geografiya", "Biologiya"],
     ">=7": ["Algebra", "Geometriya", "Inglis tili", "Rus tili", "Ona tili",
-            "O'zbekiston tarixi", "Jahon tarixi", "Adabiyot",
-            "Geografiya", "Biologiya", "Fizika"]
+            "O'zbekiston tarixi", "Jahon tarixi", "Adabiyot", "Geografiya", "Biologiya", "Fizika"]
 }
 
 subjects_ru = {
-    "<7": ["Математика", "Английский язык", "Русский язык", "Родной язык",
-           "История", "Литература", "География", "Биология"],
-    ">=7": ["Алгебра", "Геометрия", "Английский язык", "Русский язык",
-            "Родной язык", "История Узбекистана", "Всемирная история",
-            "Литература", "География", "Биология", "Физика"]
+    "<7": ["Математика", "Английский язык", "Русский язык", "Родной язык", "История", "Литература", "География", "Биология"],
+    ">=7": ["Алгебра", "Геометрия", "Английский язык", "Русский язык", "Родной язык",
+            "История Узбекистана", "Всемирная история", "Литература", "География", "Биология", "Физика"]
 }
 
 missing_subject_uz = "Menga kerakli fan yo‘q ❗"
 missing_subject_ru = "Нужного предмета нет ❗"
 
+# ============================================================
+# YORDAMCHI FUNKSIYALAR
+# ============================================================
 
-# ========================= MENU FUNKSIYALAR =========================
-
-def get_role_menu(lang):
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
+def teacher_cancel_buttons(lang):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     if lang == "ru":
-        m.add("Ученик 👨‍🎓", "Учитель 👩‍🏫")
+        markup.add("Отмена ↩️")
+        markup.add("Главное меню ⏪")
     else:
-        m.add("O‘quvchi 👨‍🎓", "O‘qituvchi 👩‍🏫")
-    m.add("1 qadam ortga ⬅️")
-    return m
-
-
-def get_student_menu(lang):
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    if lang == "ru":
-        m.add("Расписание уроков 📑", "Тесты по предметам 🔖")
-        m.add("ЧСБ демо 📝", "IQ вопросы 🧠")
-        m.add("SAT задачи 📘", "Я не ученик")
-    else:
-        m.add("Dars jadvali 📑", "Fan testlari 🔖")
-        m.add("ChSB demo 📝", "IQ savollar 🧠")
-        m.add("SAT misollari 📘", "Men o‘quvchi emasman")
-    m.add("1 qadam ortga ⬅️")
-    return m
-
+        markup.add("Bekor qilish ↩️")
+        markup.add("Bosh menyu ⏪")
+    return markup
 
 def get_teacher_menu(lang):
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     if lang == "ru":
-        m.add("Годовой план занятий 📘")
+        markup.add("Годовой план занятий 📘")
     else:
-        m.add("Sinflar uchun yillik dars rejasi 📘")
-    m.add("1 qadam ortga ⬅️")
-    return m
+        markup.add("Sinflar uchun yillik dars rejasi 📘")
+    return markup
 
+def get_student_menu(lang):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    if lang == "ru":
+        markup.add("Расписание уроков 📑")
+        markup.add("ЧСБ демо 📝")
+        markup.add("IQ вопросы 🧠")
+        markup.add("Тесты по предметам 🔖")
+        markup.add("SAT задачи 📘")
+        markup.add("Я не ученик")
+    else:
+        markup.add("Dars jadvali 📑")
+        markup.add("ChSB demo 📝")
+        markup.add("IQ savollar 🧠")
+        markup.add("Fan testlari 🔖")
+        markup.add("SAT misollari 📘")
+        markup.add("Men o‘quvchi emasman")
+    return markup
 
-def get_class_menu(lang):
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    arr = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
-    for c in arr:
-        if lang == "ru":
-            m.add(c.replace("-sinf", "-класс"))
-        else:
-            m.add(c)
-    m.add("1 qadam ortga ⬅️")
-    return m
+def get_feedback_inline():
+    keyboard = types.InlineKeyboardMarkup(row_width=1)
+    btn = types.InlineKeyboardButton(text="E'tiroz yuborish ✍🏼", url="https://t.me/khakimovvd")
+    keyboard.add(btn)
+    return keyboard
 
+# ============================================================
+# BEKOR QILISH HANDLERI (O'QITUVCHI UCHUN)
+# ============================================================
 
-def get_subject_menu(lang, sinf_int):
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
+@bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id, False) and 
+                     m.text in ["Bekor qilish ↩️", "Отмена ↩️", "Bosh menyu ⏪", "Главное меню ⏪"])
+def teacher_cancel(message):
+    chat_id = message.chat.id
+    lang = user_lang.get(chat_id, "uz")
+    
+    # Holatni tozalash
+    teacher_mode.pop(chat_id, None)
+    teacher_step.pop(chat_id, None)
+    teacher_class.pop(chat_id, None)
+    teacher_group.pop(chat_id, None)
+    
+    text = "Действие отменено! 👋" if lang == "ru" else "Bekor qilindi! 👋"
+    bot.send_message(chat_id, text, reply_markup=get_teacher_menu(lang))
 
-    subs = (
-        subjects_ru["<7"] if lang == "ru" and sinf_int < 7 else
-        subjects_uz["<7"] if lang == "uz" and sinf_int < 7 else
-        subjects_ru[">=7"] if lang == "ru" else
-        subjects_uz[">=7"]
-    )
-
-    for s in subs:
-        m.add(s)
-
-    m.add(missing_subject_ru if lang == "ru" else missing_subject_uz)
-    m.add("1 qadam ortga ⬅️")
-
-    return m
-
-
-# ========================= START =========================
-
+# ============================================================
+# /start — LANGUAGE CHOOSE
+# ============================================================
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_id = message.chat.id
-    u = get_user(chat_id)
+    text = "Assalomu aleykum! Men sizni korganimdan hursandman. Siz qaysi tilda suhbatlashmoqchisiz?"
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    markup.add("Rus 🇷🇺")
+    markup.add("Uzb 🇺🇿")
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-    if u and u.get("registered"):
-        send_role_menu(chat_id)
-        return
-
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    m.add("🇺🇿 O‘zbekcha", "🇷🇺 Русский")
-
-    bot.send_message(chat_id, "Tilni tanlang:", reply_markup=m)
-    save_user(chat_id, {"stage": "choose_lang"})
-
-
-# ===================== TIL TANLASH =====================
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "choose_lang")
+# ============================================================
+# LANGUAGE SELECTED → ROLE SELECT
+# ============================================================
+@bot.message_handler(func=lambda m: m.text in ["Rus 🇷🇺", "Uzb 🇺🇿"])
 def choose_lang(message):
     chat_id = message.chat.id
-    if message.text == "🇺🇿 O‘zbekcha":
-        lang = "uz"
-    elif message.text == "🇷🇺 Русский":
-        lang = "ru"
+    lang = "ru" if message.text == "Rus 🇷🇺" else "uz"
+    user_lang[chat_id] = lang
+
+    msg = "Вы выбрали русский язык." if lang == "ru" else "Siz o‘zbek tilini tanladingiz."
+    bot.send_message(chat_id, msg)
+
+    ask = "Вы учитель или ученик?" if lang == "ru" else "Siz o‘qituvchimisiz yoki o‘quvchi?"
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    if lang == "ru":
+        markup.add("Информация о школе")
+        markup.add("Ученик 🧑🏻‍🎓")
+        markup.add("Учитель 👨🏻‍🏫")
     else:
+        markup.add("Maktab haqida ma'lumot")
+        markup.add("O‘quvchi 🧑🏻‍🎓")
+        markup.add("O‘qituvchi 👨🏻‍🏫")
+    bot.send_message(chat_id, ask, reply_markup=markup)
+
+# ============================================================
+# ROLE CHOSEN → MENU
+# ============================================================
+@bot.message_handler(func=lambda m: m.text in ["Информация о школе", "Maktab haqida ma'lumot", "Учитель 👨🏻‍🏫", "O‘qituvchi 👨🏻‍🏫", "Ученик 🧑🏻‍🎓", "O‘quvchi 🧑🏻‍🎓"])
+def role_chosen(message):
+    chat_id = message.chat.id
+    lang = user_lang.get(chat_id, "uz")
+
+    if message.text in ["Информация о школе", "Maktab haqida ma'lumot"]:
+        # ############################################################################################
+        # Bu funksiya: "Maktab haqida ma'lumot" tugmasi bosilganda ishlaydi.
+        # Kanaldan message forward qilish (kanal ichiga "kirgizish" uchun).
+        # from_chat_id: kanal username yoki ID (masalan, "@ChortoqTIM" yoki -100XXXXXXX).
+        # message_id: kanal ichidagi real message ID (siz o'zingiz bilasiz, misol uchun 1 - birinchi post).
+        # Bot kanal admini bo'lishi kerak yoki public bo'lsa ishlaydi.
+        # ############################################################################################
+        from_chat_id = "@ChortoqTIM"  # Kanal username yoki ID
+        message_id = 1  # Kanal ichidagi message ID (real ID ni qo'ying, masalan, kanal postidan oling)
+        
+        try:
+            bot.forward_message(chat_id=chat_id, from_chat_id=from_chat_id, message_id=message_id)
+        except Exception as e:
+            bot.send_message(chat_id, f"Xato: {e}. Kanal ma'lumotini yuklab bo'lmadi.")
+        
+        # Qayta rol tanlash uchun
+        ask = "Вы учитель или ученик?" if lang == "ru" else "Siz o‘qituvchimisiz yoki o‘quvchi?"
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+        if lang == "ru":
+            markup.add("Информация о школе")
+            markup.add("Ученик 🧑🏻‍🎓")
+            markup.add("Учитель 👨🏻‍🏫")
+        else:
+            markup.add("Maktab haqida ma'lumot")
+            markup.add("O‘quvchi 🧑🏻‍🎓")
+            markup.add("O‘qituvchi 👨🏻‍🏫")
+        bot.send_message(chat_id, ask, reply_markup=markup)
         return
 
-    save_user(chat_id, {"lang": lang, "stage": "ask_contact"})
-
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    btn = types.KeyboardButton(
-        "Kontakt yuborish 📱" if lang == "uz" else "Отправить контакт 📱",
-        request_contact=True
-    )
-    m.add(btn)
-
-    bot.send_message(chat_id,
-        "Telefon raqamingizni yuboring:" if lang == "uz" else "Отправьте номер телефона:",
-        reply_markup=m
-    )
-
-
-# ===================== KONTAKT =====================
-
-@bot.message_handler(content_types=['contact'])
-def handle_contact(message):
-    chat_id = message.chat.id
-    u = get_user(chat_id)
-    lang = u.get("lang", "uz")
-
-    phone = message.contact.phone_number
-    save_user(chat_id, {"phone": phone})
-
-    if phone in PHONE_DATABASE:
-        ism = PHONE_DATABASE[phone]["ism"]
-        save_user(chat_id, {"registered": True, "full_name": ism, "stage": "choose_role"})
-
-        bot.send_message(chat_id,
-            "Kirdingiz!" if lang == "uz" else "Вы вошли!",
-            reply_markup=types.ReplyKeyboardRemove()
-        )
-        send_role_menu(chat_id)
+    if "Учитель" in message.text or "O‘qituvchi" in message.text:
+        user_role[chat_id] = "teacher"
+        text = "Hozircha o‘qituvchilar uchun ayrim funksiyalar mavjud." if lang == "uz" else "Сейчас доступны только некоторые функции для учителей."
+        bot.send_message(chat_id, text, reply_markup=get_teacher_menu(lang))
     else:
-        save_user(chat_id, {"stage": "ask_name"})
-        bot.send_message(chat_id,
-            "Ism-familyangizni yozing:" if lang == "uz" else "Введите ФИО:",
-            reply_markup=types.ForceReply()
-        )
+        user_role[chat_id] = "student"
+        text = "Menga sizga qanday yordam kerak?" if lang == "uz" else "Как я могу помочь вам?"
+        bot.send_message(chat_id, text)
+        bot.send_message(chat_id, "Quyidagilardan birini tanlang:" if lang == "uz" else "Выберите один из вариантов:", reply_markup=get_student_menu(lang))
 
-
-# ===================== ISM =====================
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "ask_name")
-def handle_name(message):
+# ============================================================
+# “Not student” → ask role again
+# ============================================================
+@bot.message_handler(func=lambda m: m.text in ["Men o‘quvchi emasman", "Я не ученик"])
+def not_student(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    lang = user_lang.get(chat_id, "uz")
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    if lang == "ru":
+        markup.add("Информация о школе")
+        markup.add("Ученик 🧑🏻‍🎓")
+        markup.add("Учитель 👨🏻‍🏫")
+    else:
+        markup.add("Maktab haqida ma'lumot")
+        markup.add("O‘quvchi 🧑🏻‍🎓")
+        markup.add("O‘qituvchi 👨🏻‍🏫")
+    text = "Выберите роль снова." if lang == "ru" else "Rolni qaytadan tanlang."
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-    save_user(chat_id, {
-        "registered": True,
-        "full_name": message.text.strip(),
-        "stage": "choose_role"
-    })
-
-    bot.send_message(chat_id,
-        "Ro‘yxatdan o‘tdingiz!" if lang == "uz" else "Вы зарегистрированы!",
-        reply_markup=types.ReplyKeyboardRemove()
-    )
-
-    send_role_menu(chat_id)
-
-
-# ===================== ROL =====================
-
-def send_role_menu(chat_id):
-    lang = get_user(chat_id).get("lang", "uz")
-    bot.send_message(
-        chat_id,
-        "Rolni tanlang:" if lang == "uz" else "Выберите роль:",
-        reply_markup=get_role_menu(lang)
-    )
-
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "choose_role")
-def choose_role(message):
-    chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
-    txt = message.text
-
-    if txt in ["O‘quvchi 👨‍🎓", "Ученик 👨‍🎓"]:
-        save_user(chat_id, {"role": "student", "stage": "student_menu"})
-        send_student_menu(chat_id)
-
-    elif txt in ["O‘qituvchi 👩‍🏫", "Учитель 👩‍🏫"]:
-        save_user(chat_id, {"role": "teacher", "stage": "teacher_menu"})
-        send_teacher_menu(chat_id)
-
-
-# ===================== O‘QUVCHI MENYUSI =====================
-
-def send_student_menu(chat_id):
-    lang = get_user(chat_id).get("lang", "uz")
-    bot.send_message(
-        chat_id,
-        "Menyudan birini tanlang:" if lang == "uz" else "Выберите пункт меню:",
-        reply_markup=get_student_menu(lang)
-    )
-    save_user(chat_id, {"stage": "student_menu"})
-
-
-# ===================== DARS JADVALI =====================
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("role") == "student"
-                     and m.text in ["Dars jadvali 📑", "Расписание уроков 📑"])
+# ============================================================
+# STUDENT: DARS JADVALI — ASK CLASS
+# ============================================================
+@bot.message_handler(func=lambda m: user_role.get(m.chat.id) == "student" and m.text in ["Dars jadvali 📑", "Расписание уроков 📑"])
 def ask_class(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    lang = user_lang.get(chat_id, "uz")
+    user_stage[chat_id] = "choose_class"
 
-    save_user(chat_id, {"stage": "choose_class"})
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
+    for c in classes:
+        if lang == "ru":
+            markup.add(c.replace("-sinf", "-класс"))
+        else:
+            markup.add(c)
 
-    bot.send_message(
-        chat_id,
-        "Sinfni tanlang:" if lang == "uz" else "Выберите класс:",
-        reply_markup=get_class_menu(lang)
-    )
+    text = "Выберите класс:" if lang == "ru" else "Siz nechinchi sinfsiz?"
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "choose_class")
-def choose_group_student(message):
+# ============================================================
+# STUDENT: CHOOSE GROUP
+# ============================================================
+@bot.message_handler(func=lambda m: user_stage.get(m.chat.id) == "choose_class")
+def choose_group(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    lang = user_lang.get(chat_id, "uz")
+    text = message.text.strip()
 
-    t = message.text
     sinf = None
-
-    if "-sinf" in t:
-        sinf = t.replace("-sinf", "")
-    if "-класс" in t:
-        sinf = t.replace("-класс", "")
+    if "-sinf" in text:
+        sinf = text.replace("-sinf", "")
+    elif "-класс" in text:
+        sinf = text.replace("-класс", "")
 
     if not sinf or sinf not in groups:
         return
 
-    save_user(chat_id, {"class": sinf, "stage": "choose_group"})
+    user_class[chat_id] = sinf
+    user_stage[chat_id] = "choose_group"
 
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     for g in groups[sinf]:
-        m.add(g)
-    m.add("1 qadam ortga ⬅️")
+        markup.add(g)
 
-    bot.send_message(
-        chat_id,
-        "Guruhni tanlang:" if lang == "uz" else "Выберите группу:",
-        reply_markup=m
-    )
+    text = "Выберите группу:" if lang == "ru" else "Siz qaysi guruhsiz?"
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "choose_group")
+# ============================================================
+# STUDENT: SEND SCHEDULE IMAGE
+# ============================================================
+@bot.message_handler(func=lambda m: user_stage.get(m.chat.id) == "choose_group" and m.text in sum(groups.values(), []))
 def send_schedule(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
-
+    lang = user_lang.get(chat_id, "uz")
     group = message.text
+
     path = f"images/{group}.jpg"
 
     try:
         with open(path, "rb") as img:
-            cap = f"{group} dars jadvali 📘" if lang == "uz" else f"Расписание для {group} 📘"
-            bot.send_photo(chat_id, img, caption=cap)
-    except:
-        bot.send_message(chat_id,
-            "Dars jadvali topilmadi." if lang == "uz" else "Расписание не найдено."
-        )
+            caption = f"{group} dars jadvali 📚" if lang == "uz" else f"Расписание для {group} 📚"
+            bot.send_photo(chat_id, img, caption=caption)
+    except FileNotFoundError:
+        text = "Dars jadvali mavjud emas." if lang == "uz" else "Расписание не найдено."
+        bot.send_message(chat_id, text)
+    
+    # Holatni tozalash va menuga qaytish
+    user_stage.pop(chat_id, None)
+    user_class.pop(chat_id, None)
+    bot.send_message(chat_id, "Boshqa savollar?" if lang == "uz" else "Ещё вопросы?", reply_markup=get_student_menu(lang))
 
-    send_student_menu(chat_id)
-
-
-# ===================== TEST BO‘LIMLARI =====================
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("role") == "student"
-                     and m.text in ["Fan testlari 🔖", "Тесты по предметам 🔖"])
-def testlar(message):
+# ============================================================
+# STUDENT: BOSHQALAR UCHUN "TEZ ORADA"
+# ============================================================
+@bot.message_handler(func=lambda m: user_role.get(m.chat.id) == "student" and 
+                     m.text in ["ChSB demo 📝", "ЧСБ демо 📝", "IQ savollar 🧠", "IQ вопросы 🧠", 
+                                "Fan testlari 🔖", "Тесты по предметам 🔖", "SAT misollari 📘", "SAT задачи 📘"])
+def student_other(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    lang = user_lang.get(chat_id, "uz")
+    text = "Bu funksiya tez orada paydo bo‘ladi ⏳!" if lang == "uz" else "Эта функция скоро появится ⏳!"
+    bot.send_message(chat_id, text)
 
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    if lang == "uz":
-        m.add("Qiziqquvchilar uchun testlar", "Olimpiada testlari")
-    else:
-        m.add("Тесты для интересующихся", "Тесты для олимпиад")
-    m.add("1 qadam ortga ⬅️")
+# ============================================================
+#   O‘QITUVCHI BO‘LIMI — YILLIK DARS REJASI
+# ============================================================
 
-    save_user(chat_id, {"stage": "test_type"})
-
-    bot.send_message(
-        chat_id,
-        "Test turini tanlang:" if lang == "uz" else "Выберите тип теста:",
-        reply_markup=m
-    )
-
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "test_type")
-def test_class(message):
+@bot.message_handler(func=lambda m: user_role.get(m.chat.id) == "teacher" and 
+                     m.text in ["Sinflar uchun yillik dars rejasi 📘", "Годовой план занятий 📘"])
+def teacher_start_plan(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    lang = user_lang.get(chat_id, "uz")
 
-    txt = message.text
-    if txt not in [
-        "Qiziqquvchilar uchun testlar", "Olimpiada testlari",
-        "Тесты для интересующихся", "Тесты для олимпиад"
-    ]:
-        return
+    teacher_mode[chat_id] = True
+    teacher_step[chat_id] = "class"
 
-    save_user(chat_id, {"stage": "choose_class_test"})
-    bot.send_message(
-        chat_id,
-        "Qaysi sinf darajasi?" if lang == "uz" else "Выберите класс:",
-        reply_markup=get_class_menu(lang)
-    )
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    classes = ["5-sinf", "6-sinf", "7-sinf", "8-sinf", "9-sinf", "10-sinf", "11-sinf"]
+    for c in classes:
+        if lang == "ru":
+            markup.add(c.replace("-sinf", "-класс"))
+        else:
+            markup.add(c)
 
+    cancel_markup = teacher_cancel_buttons(lang)
+    for row in cancel_markup.keyboard:
+        markup.keyboard.append(row)
 
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "choose_class_test")
-def test_subject(message):
-    chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    text = "Выберите класс:" if lang == "ru" else "Siz qaysi sinfning rejasini bilmoqchisiz?"
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-    t = message.text
-    sinf = None
+# ============================================================
+#   2-QADAM – GURUH TANLASH
+# ============================================================
 
-    if "-sinf" in t:
-        sinf = t.replace("-sinf", "")
-    if "-класс" in t:
-        sinf = t.replace("-класс", "")
-
-    if not sinf or sinf not in groups:
-        return
-
-    save_user(chat_id, {"stage": "choose_subject_test", "class_test": sinf})
-
-    bot.send_message(
-        chat_id,
-        "Qaysi fan?" if lang == "uz" else "Выберите предмет:",
-        reply_markup=get_subject_menu(lang, int(sinf))
-    )
-
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "choose_subject_test")
-def test_selected(message):
-    chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
-
-    bot.send_message(
-        chat_id,
-        "Bu fan bo‘yicha test tez orada tayyor bo‘ladi ⏳!" if lang == "uz"
-        else "Тест по этому предмету скоро будет готов ⏳!"
-    )
-
-    send_student_menu(chat_id)
-
-
-# ===================== MEN O‘QUVCHI EMASMAN =====================
-
-@bot.message_handler(func=lambda m: m.text in ["Men o‘quvchi emasman", "Я не ученик"])
-def not_student(message):
-    chat_id = message.chat.id
-    save_user(chat_id, {"stage": "choose_role"})
-    send_role_menu(chat_id)
-
-
-# ===================== 1 QADAM ORTGA =====================
-
-@bot.message_handler(func=lambda m: m.text == "1 qadam ortga ⬅️")
-def back(message):
-    chat_id = message.chat.id
-    u = get_user(chat_id)
-    stage = u.get("stage")
-    role = u.get("role")
-    lang = u.get("lang", "uz")
-
-    if stage == "student_menu":
-        save_user(chat_id, {"stage": "choose_role"})
-        send_role_menu(chat_id)
-        return
-
-    if stage in ["test_type", "choose_class_test", "choose_subject_test",
-                 "choose_class", "choose_group"]:
-
-        send_student_menu(chat_id)
-        save_user(chat_id, {"stage": "student_menu"})
-        return
-
-    bot.send_message(chat_id,
-        "Orqaga qaytish mumkin emas." if lang == "uz"
-        else "Нельзя вернуться назад."
-    )
-
-
-# ===================== O‘QITUVCHI MENU =====================
-
-def send_teacher_menu(chat_id):
-    lang = get_user(chat_id).get("lang", "uz")
-    bot.send_message(
-        chat_id,
-        "O‘qituvchilar menyusi:" if lang == "uz" else "Меню учителя:",
-        reply_markup=get_teacher_menu(lang)
-    )
-
-
-# ===================== TEACHER → YEARLY PLAN =====================
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("role") == "teacher"
-                     and m.text in ["Sinflar uchun yillik dars rejasi 📘", "Годовой план занятий 📘"])
-def teacher_start(message):
-    chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
-
-    save_user(chat_id, {"stage": "teacher_class"})
-
-    bot.send_message(
-        chat_id,
-        "Sinfni tanlang:" if lang == "uz" else "Выберите класс:",
-        reply_markup=get_class_menu(lang)
-    )
-
-
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "teacher_class")
+@bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id, False) and 
+                     teacher_step.get(m.chat.id) == "class")
 def teacher_choose_group(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    lang = user_lang.get(chat_id, "uz")
+    text = message.text.strip()
 
-    t = message.text
     sinf = None
-
-    if "-sinf" in t:
-        sinf = t.replace("-sinf", "")
-    if "-класс" in t:
-        sinf = t.replace("-класс", "")
-
+    if "-sinf" in text:
+        sinf = text.replace("-sinf", "")
+    elif "-класс" in text:
+        sinf = text.replace("-класс", "")
+    
     if not sinf or sinf not in groups:
         return
 
-    save_user(chat_id, {"stage": "teacher_group", "teacher_class": sinf})
+    teacher_class[chat_id] = sinf
+    teacher_step[chat_id] = "group"
 
-    m = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     for g in groups[sinf]:
-        m.add(g)
-    m.add("1 qadam ortga ⬅️")
+        markup.add(g)
 
-    bot.send_message(
-        chat_id,
-        "Guruhni tanlang:" if lang == "uz" else "Выберите группу:",
-        reply_markup=m
-    )
+    cancel_markup = teacher_cancel_buttons(lang)
+    for row in cancel_markup.keyboard:
+        markup.keyboard.append(row)
 
+    text = "Выберите параллель:" if lang == "ru" else "Qaysi guruhni tanlaysiz?"
+    bot.send_message(chat_id, text, reply_markup=markup)
 
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "teacher_group")
+# ============================================================
+#   3-QADAM – FANLAR TANLASH
+# ============================================================
+
+@bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id, False) and 
+                     teacher_step.get(m.chat.id) == "group")
 def teacher_choose_subject(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
-    group = message.text
+    lang = user_lang.get(chat_id, "uz")
+    text = message.text.strip()
 
-    all_groups = sum(groups.values(), [])
-    if group not in all_groups:
+    all_groups = [g for sublist in groups.values() for g in sublist]
+    if text not in all_groups:
         return
 
-    sinf = get_user(chat_id).get("teacher_class")
-    save_user(chat_id, {"stage": "teacher_subject", "teacher_group": group})
+    teacher_group[chat_id] = text
+    teacher_step[chat_id] = "subject"
 
-    bot.send_message(
-        chat_id,
-        "Fan tanlang:" if lang == "uz" else "Выберите предмет:",
-        reply_markup=get_subject_menu(lang, int(sinf))
-    )
+    sinf = teacher_class.get(chat_id)
+    sinf_int = int(sinf)
 
+    subjects = subjects_ru["<7"] if (lang == "ru" and sinf_int < 7) else \
+               subjects_uz["<7"] if (lang == "uz" and sinf_int < 7) else \
+               subjects_ru[">=7"] if lang == "ru" else subjects_uz[">=7"]
 
-@bot.message_handler(func=lambda m: get_user(m.chat.id).get("stage") == "teacher_subject")
-def teacher_subject_finish(message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    for s in subjects:
+        markup.add(s)
+
+    missing_btn = missing_subject_ru if lang == "ru" else missing_subject_uz
+    markup.add(missing_btn)
+
+    cancel_markup = teacher_cancel_buttons(lang)
+    for row in cancel_markup.keyboard:
+        markup.keyboard.append(row)
+
+    text = "Выберите предмет:" if lang == "ru" else "Qaysi fan rejasi kerak?"
+    bot.send_message(chat_id, text, reply_markup=markup)
+
+# ============================================================
+#   KERAKLI FAN YO'Q HANDLERI
+# ============================================================
+
+@bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id, False) and 
+                     m.text in [missing_subject_uz, missing_subject_ru])
+def teacher_missing_subject(message):
     chat_id = message.chat.id
-    lang = get_user(chat_id).get("lang", "uz")
+    lang = user_lang.get(chat_id, "uz")
+    
+    text = "Sizga kerakli fan bu ro'yhatda bo'lmasa, u tez kunlarda qo'shiladi ⏳!" if lang == "uz" else "Если нужного предмета нет в списке, он будет добавлен в ближайшее время ⏳!"
+    bot.send_message(chat_id, text)
+    
+    teacher_cancel(message)
+
+# ============================================================
+#   4-QADAM – FAN TANLANGANIDA NATIJA
+# ============================================================
+
+@bot.message_handler(func=lambda m: teacher_mode.get(m.chat.id, False) and 
+                     teacher_step.get(m.chat.id) == "subject")
+def teacher_subject_result(message):
+    chat_id = message.chat.id
+    lang = user_lang.get(chat_id, "uz")
     subject = message.text
+    
+    if subject in [missing_subject_uz, missing_subject_ru, "Bekor qilish ↩️", "Отмена ↩️", "Bosh menyu ⏪", "Главное меню ⏪"]:
+        return  # Bu tugmalar uchun alohida handlerlar ishlaydi
 
-    sinf = get_user(chat_id).get("teacher_class")
-    group = get_user(chat_id).get("teacher_group")
+    sinf = teacher_class.get(chat_id)
+    group = teacher_group.get(chat_id)
+    
+    text = f"{sinf}-{group} sinf uchun *{subject}* fanidan yillik dars rejasi tez orada qo‘shiladi ⏳!" if lang == "uz" else f"Годовой план по *{subject}* для {sinf}-{group} класса будет добавлен в ближайшее время ⏳!"
+    bot.send_message(chat_id, text, parse_mode="Markdown")
+    
+    teacher_cancel(message)
 
-    if message.text in [missing_subject_uz, missing_subject_ru]:
-        bot.send_message(chat_id,
-            "Bu fan tez orada qo‘shiladi ⏳!" if lang == "uz"
-            else "Этот предмет скоро будет добавлен ⏳!"
-        )
-    else:
-        bot.send_message(
-            chat_id,
-            f"{sinf}-{group} uchun {subject} bo‘yicha YILLIK REJA tez orada qo‘shiladi ⏳!"
-            if lang == "uz"
-            else f"Годовой план по предмету {subject} для {sinf}-{group} скоро будет готов ⏳!"
-        )
+# ============================================================
+# CALLBACK → SHAXSIY TELEGRAM LINK
+# ============================================================
+@bot.message_handler(commands=['callback'])
+def send_test(message):
+    chat_id = message.chat.id
+    bot.send_message(chat_id, "Agar bot haqida e’tirozlaringiz bo‘lsa pastdagi tugmani bosing 👇🏼", reply_markup=get_feedback_inline())
 
-    send_teacher_menu(chat_id)
-    save_user(chat_id, {"stage": "teacher_menu"})
-
-
-# ===================== CALLBACK → E'TIROZ YUBORISH =====================
-
-@bot.callback_query_handler(func=lambda c: True)
-def callback_handler(call):
-    bot.answer_callback_query(call.id)
-    keyboard = types.InlineKeyboardMarkup()
-    btn = types.InlineKeyboardButton("E'tiroz yuborish ✍🏼", url="https://t.me/khakimovvd")
-    keyboard.add(btn)
-    bot.send_message(call.message.chat.id, "E'tirozingizni yuborishingiz mumkin:", reply_markup=keyboard)
-
-
-# ===================== RESTART =====================
+# ============================================================
+# UNIVERSAL RESTART – HAR QANDAY HOSTINGDA ISHLAYDI
+# ============================================================
 
 @bot.message_handler(commands=['restart'])
-def restart(message):
-    bot.reply_to(message, "Bot qayta ishga tushmoqda...")
-    threading.Thread(target=lambda: os._exit(0)).start()
+def universal_restart(message):
+    bot.reply_to(message, "Bot qayta ishga tushirilmoqda...")
+    print(f"[RESTART] {message.from_user.first_name} ({message.from_user.id}) botni restart qildi!")
 
+    # 1.5 soniya kutib, xabar yetib borishi uchun
+    threading.Thread(target=lambda: (
+        os._exit(0)
+    )).start()
 
-# ===================== RUN =====================
-
+# ============================================================
+# BOT START
+# ============================================================
 if __name__ == "__main__":
-    print("BOT ISHLAMOQDA...")
-    bot.infinity_polling(skip_pending=True)
-c
+    print("Bot ishga tushdi...")
+    try:
+        bot.infinity_polling(none_stop=True, interval=0)
+    except:
+        print("Bot to‘xtadi, 5 soniyadan keyin qayta ishga tushadi...")
+        import time
+        time.sleep(5)
+        os.execv(__file__, ['python'] + [__file__])
+
 bot.infinity_polling()
