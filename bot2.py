@@ -234,7 +234,8 @@ def teacher_subject(bot, message):
 # ============================================================
 
 def register_handlers(bot):
-    from main import user_role, user_lang
+    # bot2.py ichida 237-qator atrofida
+    from bot import user_role, user_lang
 
     # ========= TESTLAR MENYUSI =========
     @bot.message_handler(func=lambda m: user_role.get(m.chat.id) == "student" and m.text == "Fan testlar 📝")
