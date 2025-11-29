@@ -4,6 +4,8 @@
 # ============================================================
 
 from telebot import types
+# bot2.py ning eng yuqorisiga (from telebot import types dan keyin)
+from bot import get_user, groups
 
 # STATE STORAGE (har bir foydalanuvchi uchun alohida)
 test_mode = {}
