@@ -6,7 +6,7 @@ import threading
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 from bot2 import register_handlers
-register_handlers(bot)
+register_handlers(bot)   # shu qator bo‘lsa yetarli
 
 # ============================================================
 # USER DATA
