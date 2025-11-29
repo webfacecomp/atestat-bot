@@ -460,20 +460,40 @@ def universal_restart(message):
     threading.Thread(target=os._exit, args=(0,)).start()
 
 # ============================================================
-# BOT2 NI ULASH — ENDI XAVFSIZ (eng oxirda!)
+# BOT2 NI ULASH
 # ============================================================
 from bot2 import register_handlers
 register_handlers(bot, get_user, groups)
 
+print("Barcha handlerlar yuklandi!")
+
 # ============================================================
-# BOT ISHGA TUSHIRISH
+# RAILWAY UCHUN WEBHOOK (MUHIM!)
+# ============================================================
+from fastapi import FastAPI, Request
+import uvicorn
+
+app = FastAPI()
+
+@app.get("/")
+def home():
+    return {"status": "Bot ishlayapti!"}
+
+@app.post("/")
+async def webhook(request: Request):
+    try:
+        json_data = await request.json()
+        update = telebot.types.Update.de_json(json_data)
+        bot.process_new_updates([update])
+    except Exception as e:
+        print("Webhook xatosi:", e)
+    return {"ok": True}
+
+# ============================================================
+# ISHGA TUSHIRISH — RAILWAY UCHUN
 # ============================================================
 if __name__ == "__main__":
-    print("Bot ishga tushdi...")
-    try:
-        bot.infinity_polling(none_stop=True, interval=0)
-    except Exception as e:
-        print("Xato:", e)
-        import time
-        time.sleep(5)
-        os.execv(__file__, ['python'] + [__file__])
+    # Railway avtomatik PORT beradi
+    port = int(os.environ.get("PORT", 8000))
+    print(f"Bot webhook rejimida ishga tushdi → port: {port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
