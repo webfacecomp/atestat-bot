@@ -1,8 +1,10 @@
+```python
 import os
 import telebot
 from telebot import types
-import threading
+from fastapi import FastAPI, Request
 from tinydb import TinyDB, Query
+import threading
 
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
@@ -439,4 +441,5 @@ if __name__ == "__main__":
         import time
         time.sleep(5)
         os.execv(__file__, ['python'] + [__file__])
+```
 bot.infinity_polling()
