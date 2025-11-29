@@ -1,19 +1,28 @@
-```python
 import os
 import telebot
 from telebot import types
 from fastapi import FastAPI, Request
 from tinydb import TinyDB, Query
+import logging
 import threading
+
+# Logging for debugging
+logging.basicConfig(level=logging.INFO)
 
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
-
-# ============================================================
-# USER DATA - TinyDB bilan saqlash
-# ============================================================
 db = TinyDB('users.json')
 User = Query()
+
+app = FastAPI()
+
+@app.post("/")
+async def webhook(req: Request):
+    json_str = await req.body()
+    json_obj = json_str.decode("UTF-8")
+    update = types.Update.de_json(json_obj)
+    bot.process_new_updates([update])
+    return {"ok": True}
 
 # ============================================================
 # PHONE DATABASE - O'quvchilar bazasida
@@ -430,16 +439,19 @@ def universal_restart(message):
     )).start()
 
 # ============================================================
-# BOT START
+# RAILWAY UCHUN FASTAPI WEBHOOK
 # ============================================================
+@app.get("/")
+def home():
+    return "Bot ishlayapti!"
+
+def run_bot():
+    bot.remove_webhook()
+    bot.set_webhook(url=f"https://{os.environ.get('RAILWAY_STATIC_URL')}/")
+    logging.info("Webhook set")
+
 if __name__ == "__main__":
-    print("Bot ishga tushdi...")
-    try:
-        bot.infinity_polling(none_stop=True, interval=0)
-    except:
-        print("Bot to‘xtadi, 5 soniyadan keyin qayta ishga tushadi...")
-        import time
-        time.sleep(5)
-        os.execv(__file__, ['python'] + [__file__])
-```
+    import uvicorn
+    Thread(target=run_bot).start()
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
 bot.infinity_polling()
