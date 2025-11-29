@@ -468,32 +468,35 @@ register_handlers(bot, get_user, groups)
 print("Barcha handlerlar yuklandi!")
 
 # ============================================================
-# RAILWAY UCHUN WEBHOOK (MUHIM!)
+# RAILWAY UCHUN WEBHOOK (FastAPI + Uvicorn)
 # ============================================================
-from fastapi import FastAPI, Request
-import uvicorn
+try:
+    from fastapi import FastAPI, Request
+    import uvicorn
 
-app = FastAPI()
+    app = FastAPI()
 
-@app.get("/")
-def home():
-    return {"status": "Bot ishlayapti!"}
+    @app.get("/")
+    def home():
+        return {"status": "Bot ishlayapti!", "bot": "Chortoq TIM"}
 
-@app.post("/")
-async def webhook(request: Request):
-    try:
-        json_data = await request.json()
-        update = telebot.types.Update.de_json(json_data)
-        bot.process_new_updates([update])
-    except Exception as e:
-        print("Webhook xatosi:", e)
-    return {"ok": True}
+    @app.post("/")
+    async def webhook(request: Request):
+        try:
+            json_data = await request.json()
+            update = telebot.types.Update.de_json(json_data)
+            bot.process_new_updates([update])
+        except Exception as e:
+            print("Webhook xatosi:", e)
+        return {"ok": True}
 
-# ============================================================
-# ISHGA TUSHIRISH — RAILWAY UCHUN
-# ============================================================
-if __name__ == "__main__":
-    # Railway avtomatik PORT beradi
-    port = int(os.environ.get("PORT", 8000))
-    print(f"Bot webhook rejimida ishga tushdi → port: {port}")
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    if __name__ == "__main__":
+        import os
+        port = int(os.environ.get("PORT", 8000))
+        print(f"Bot webhook rejimida ishga tushmoqda → port: {port}")
+        uvicorn.run(app, host="0.0.0.0", port=port)
+
+except ImportError:
+    print("FastAPI topilmadi, lokal polling rejimiga o‘tildi...")
+    # Agar Railway’da fastapi o‘rnatilmasa, lokal sinash uchun
+    bot.infinity_polling(none_stop=True)
