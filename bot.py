@@ -168,7 +168,7 @@ def role_chosen(message):
         # message_id: kanal ichidagi real message ID (siz o'zingiz bilasiz, misol uchun 1 - birinchi post).
         # Bot kanal admini bo'lishi kerak yoki public bo'lsa ishlaydi.
         # ############################################################################################
-        from_chat_id = "@ChortoqTIM"  # Kanal username yoki ID
+        from_chat_id = ""  # Kanal username yoki ID
         message_id = 1  # Kanal ichidagi message ID (real ID ni qo'ying, masalan, kanal postidan oling)
         
         try:
