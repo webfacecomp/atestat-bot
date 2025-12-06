@@ -1,14 +1,20 @@
 import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.utils import executor
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+import logging
 import os
-import telebot
-from telebot import types
-import threading
-API_TOKEN = "YOUR_TOKEN_HERE"
+from dotenv import load_dotenv
+
+load_dotenv()
+
+API_TOKEN = os.getenv("BOT_TOKEN")
 
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot, storage=MemoryStorage())
+dp = Dispatcher(bot)
+
 
 # =====================
 # FOYDALANUVCHI HOLATLARI (FSM)
