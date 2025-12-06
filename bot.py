@@ -1,10 +1,8 @@
 import logging
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from aiogram.utils import executor
-from aiogram.dispatcher import FSMContext
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher.filters.state import State, StatesGroup
-
+import os
+import telebot
+from telebot import types
+import threading
 API_TOKEN = "YOUR_TOKEN_HERE"
 
 logging.basicConfig(level=logging.INFO)
