@@ -1,10 +1,12 @@
-import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.utils import executor
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 import logging
 import os
 from dotenv import load_dotenv
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.dispatcher import FSMContext
+
 
 load_dotenv()
 
@@ -798,4 +800,6 @@ def test_subject_result(message):
                      else "Выберите следующий раздел:",
                      reply_markup=get_student_menu(lang))
 
-bot.infinity_polling()
+if __name__ == '__main__':
+    from aiogram import executor
+    executor.start_polling(dp, skip_updates=True)
