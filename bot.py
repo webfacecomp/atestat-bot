@@ -126,22 +126,22 @@ def teacher_cancel(message):
 # ============================================================
 # /start — LANGUAGE CHOOSE
 # ============================================================
-    chat_id = message.chat.id
+chat_id = message.chat.id
 
-    if not is_subscribed(chat_id):
-        markup = types.InlineKeyboardMarkup()
-        markup.add(
-            types.InlineKeyboardButton(
-                text="Kanalga obuna bo‘lish 📢",
-                url=f"https://t.me/{CHANNEL_USERNAME.replace('@kh_journey')}"
-            )
+if not is_subscribed(chat_id):
+    markup = types.InlineKeyboardMarkup()
+    markup.add(
+        types.InlineKeyboardButton(
+            text="Kanalga obuna bo‘lish 📢",
+            url=f"https://t.me/{CHANNEL_USERNAME.replace('@kh_journey')}"
         )
-        bot.send_message(
-            chat_id,
-            "Botdan foydalanish uchun avval kanalimizga obuna bo‘ling 👇",
-            reply_markup=markup
-        )
-        return
+    )
+    bot.send_message(
+        chat_id,
+        "Botdan foydalanish uchun avval kanalimizga obuna bo‘ling 👇",
+        reply_markup=markup
+    )
+    return
 
 @bot.message_handler(commands=['start'])
 def start(message):
