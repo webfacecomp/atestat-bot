@@ -7,9 +7,9 @@ TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
 # ============================================================
-# MAJBURIY KANAL
+# MAJBURIY KANAL (ALMASHTIR!)
 # ============================================================
-CHANNEL_ID = "@your_channel_username"  # masalan: "@my_school_channel"
+CHANNEL_ID = "@kh_journey"  # masalan: "@my_school_channel"
 
 # ============================================================
 # USER DATA
@@ -54,7 +54,7 @@ missing_subject_uz = "Menga kerakli fan yo‘q ❗"
 missing_subject_ru = "Нужного предмета нет ❗"
 
 # ============================================================
-# KANALGA OBUNA TEKSHIRUV
+# KANALGA OBUNA TEKSHIRISH (YANGI, MUSTAQIL)
 # ============================================================
 def is_subscribed(user_id):
     try:
@@ -71,11 +71,11 @@ def ask_subscription(chat_id, lang):
         else "Для продолжения, пожалуйста, подпишитесь на канал 📢"
     )
 
-    markup = types.InlineKeyboardMarkup()
+    markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
         types.InlineKeyboardButton(
             "Kanalga o‘tish 🔔" if lang == "uz" else "Перейти в канал 🔔",
-            url=f"https://t.me/{CHANNEL_ID.replace('@','')}"
+            url=f"https://t.me/{CHANNEL_ID.replace('@kh_journey')}"
         )
     )
     markup.add(
@@ -88,7 +88,7 @@ def ask_subscription(chat_id, lang):
     bot.send_message(chat_id, text, reply_markup=markup)
 
 # ============================================================
-# CALLBACK — OBUNA TEKSHIRISH
+# CALLBACK — OBUNA TEKSHIRUV
 # ============================================================
 @bot.callback_query_handler(func=lambda call: call.data == "check_sub")
 def check_subscription(call):
@@ -119,17 +119,19 @@ def check_subscription(call):
         )
 
 # ============================================================
-# /start
+# /start — LANGUAGE CHOOSE
 # ============================================================
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_id = message.chat.id
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("Rus 🇷🇺", "Uzb 🇺🇿")
-    bot.send_message(chat_id, "Qaysi tilda davom etamiz?", reply_markup=markup)
+    text = "Assalomu aleykum! Qaysi tilda davom etamiz?"
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+    markup.add("Rus 🇷🇺")
+    markup.add("Uzb 🇺🇿")
+    bot.send_message(chat_id, text, reply_markup=markup)
 
 # ============================================================
-# LANGUAGE SELECT
+# LANGUAGE SELECTED → OBUNA TEKSHIRUV
 # ============================================================
 @bot.message_handler(func=lambda m: m.text in ["Rus 🇷🇺", "Uzb 🇺🇿"])
 def choose_lang(message):
@@ -160,4 +162,7 @@ def choose_lang(message):
 # ============================================================
 if __name__ == "__main__":
     print("Bot ishga tushdi...")
-    bot.infinity_polling(none_stop=True)
+    try:
+        bot.infinity_polling(none_stop=True)
+    except Exception as e:
+        print("Xato:", e)
