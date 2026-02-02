@@ -126,31 +126,31 @@ def teacher_cancel(message):
 # ============================================================
 # /start — LANGUAGE CHOOSE
 # ============================================================
-chat_id = message.chat.id
-
-if not is_subscribed(chat_id):
-    markup = types.InlineKeyboardMarkup()
-    markup.add(
-        types.InlineKeyboardButton(
-            text="Kanalga obuna bo‘lish 📢",
-            url=f"https://t.me/{CHANNEL_USERNAME.replace('@kh_journey')}"
-        )
-    )
-    bot.send_message(
-        chat_id,
-        "Botdan foydalanish uchun avval kanalimizga obuna bo‘ling 👇",
-        reply_markup=markup
-    )
-    return
-
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_id = message.chat.id
-    text = "Assalomu aleykum! Men sizni korganimdan hursandman. Siz qaysi tilda suhbatlashmoqchisiz?"
+
+    if not is_subscribed(chat_id):
+        markup = types.InlineKeyboardMarkup()
+        markup.add(
+            types.InlineKeyboardButton(
+                text="Kanalga obuna bo‘lish 📢",
+                url=f"https://t.me/{CHANNEL_USERNAME.replace('@','')}"
+            )
+        )
+        bot.send_message(
+            chat_id,
+            "Botdan foydalanish uchun avval kanalimizga obuna bo‘ling 👇",
+            reply_markup=markup
+        )
+        return
+
+    text = "Assalomu aleykum! Men sizni ko‘rganimdan hursandman. Siz qaysi tilda suhbatlashmoqchisiz?"
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
     markup.add("Rus 🇷🇺")
     markup.add("Uzb 🇺🇿")
     bot.send_message(chat_id, text, reply_markup=markup)
+
 
 # ============================================================
 # LANGUAGE SELECTED → ROLE SELECT
