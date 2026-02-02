@@ -5,6 +5,7 @@ import threading
 
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
+CHANNEL_USERNAME = "@kh_journey"
 
 # ============================================================
 # USER DATA
@@ -54,6 +55,13 @@ missing_subject_ru = "Нужного предмета нет ❗"
 # ============================================================
 # YORDAMCHI FUNKSIYALAR
 # ============================================================
+def is_subscribed(chat_id):
+    try:
+        member = bot.get_chat_member(CHANNEL_USERNAME, chat_id)
+        return member.status in ["member", "administrator", "creator"]
+    except:
+        return False
+
 
 def teacher_cancel_buttons(lang):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
@@ -118,6 +126,23 @@ def teacher_cancel(message):
 # ============================================================
 # /start — LANGUAGE CHOOSE
 # ============================================================
+    chat_id = message.chat.id
+
+    if not is_subscribed(chat_id):
+        markup = types.InlineKeyboardMarkup()
+        markup.add(
+            types.InlineKeyboardButton(
+                text="Kanalga obuna bo‘lish 📢",
+                url=f"https://t.me/{CHANNEL_USERNAME.replace('@kh_journey')}"
+            )
+        )
+        bot.send_message(
+            chat_id,
+            "Botdan foydalanish uchun avval kanalimizga obuna bo‘ling 👇",
+            reply_markup=markup
+        )
+        return
+
 @bot.message_handler(commands=['start'])
 def start(message):
     chat_id = message.chat.id
