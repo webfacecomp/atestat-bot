@@ -111,7 +111,7 @@ def get_feedback_inline():
     keyboard = types.InlineKeyboardMarkup()
     btn = types.InlineKeyboardButton(
         text="E'tiroz yuborish ✍🏼",
-        url="https://t.me/khakimovvd"
+        url="https://t.me/khakimovvss"
     )
     keyboard.add(btn)
     return keyboard
