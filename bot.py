@@ -5,7 +5,6 @@ from telebot import types
 TOKEN = os.environ.get("BOT_TOKEN")
 bot = telebot.TeleBot(TOKEN)
 
-# Guruhlar
 groups = {
     "5": ["5-01", "5-02"],
     "6": ["6-01", "6-02"],
@@ -17,87 +16,117 @@ groups = {
 }
 
 user_stage = {}
+user_class = {}
 
-# ============================================================
-# START → SINFLARNI CHIQARADI
-# ============================================================
+# =====================================================
+# ASOSIY MENU
+# =====================================================
+
+def main_menu():
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    markup.add("📚 Dars jadvali")
+    markup.add("✍🏼 Feedback")
+    return markup
+
+# =====================================================
+# START
+# =====================================================
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    chat_id = message.chat.id
-    user_stage[chat_id] = "choose_class"
+    bot.send_message(
+        message.chat.id,
+        "Xush kelibsiz! Kerakli bo‘limni tanlang:",
+        reply_markup=main_menu()
+    )
+
+# =====================================================
+# DARS JADVALI BOSILSA
+# =====================================================
+
+@bot.message_handler(func=lambda m: m.text == "📚 Dars jadvali")
+def ask_class(message):
+    user_stage[message.chat.id] = "class"
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
     for i in range(5, 12):
         markup.add(f"{i}-sinf")
+    markup.add("🔙 Orqaga")
 
-    bot.send_message(chat_id, "Sinfni tanlang:", reply_markup=markup)
+    bot.send_message(message.chat.id, "Sinfni tanlang:", reply_markup=markup)
 
-# ============================================================
-# SINFDAN KEYIN GURUH TANLASH
-# ============================================================
+# =====================================================
+# SINFDAN KEYIN GURUH
+# =====================================================
 
-@bot.message_handler(func=lambda m: user_stage.get(m.chat.id) == "choose_class")
+@bot.message_handler(func=lambda m: user_stage.get(m.chat.id) == "class")
 def choose_group(message):
-    chat_id = message.chat.id
-    text = message.text.replace("-sinf", "")
-
-    if text not in groups:
+    if message.text == "🔙 Orqaga":
+        bot.send_message(message.chat.id, "Asosiy menyu:", reply_markup=main_menu())
+        user_stage.pop(message.chat.id, None)
         return
 
-    user_stage[chat_id] = "choose_group"
-    user_stage[str(chat_id)+"_class"] = text
+    sinf = message.text.replace("-sinf", "")
+    if sinf not in groups:
+        return
+
+    user_class[message.chat.id] = sinf
+    user_stage[message.chat.id] = "group"
 
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    for g in groups[text]:
+    for g in groups[sinf]:
         markup.add(g)
+    markup.add("🔙 Orqaga")
 
-    bot.send_message(chat_id, "Guruhni tanlang:", reply_markup=markup)
+    bot.send_message(message.chat.id, "Guruhni tanlang:", reply_markup=markup)
 
-# ============================================================
-# GURUH TANLANGANDA RASM YUBORADI
-# ============================================================
+# =====================================================
+# GURUH TANLANGANDA
+# =====================================================
 
-@bot.message_handler(func=lambda m: user_stage.get(m.chat.id) == "choose_group")
+@bot.message_handler(func=lambda m: user_stage.get(m.chat.id) == "group")
 def send_schedule(message):
-    chat_id = message.chat.id
-    group = message.text
+    if message.text == "🔙 Orqaga":
+        ask_class(message)
+        return
 
-    path = f"images/{group}.jpg"
+    group = message.text
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(BASE_DIR, "images", f"{group}.jpg")
 
     try:
         with open(path, "rb") as img:
-            bot.send_photo(chat_id, img, caption=f"{group} dars jadvali 📚")
+            bot.send_photo(message.chat.id, img, caption=f"{group} dars jadvali 📚")
     except:
-        bot.send_message(chat_id, "Dars jadvali topilmadi.")
+        bot.send_message(message.chat.id, "Dars jadvali topilmadi.")
 
-    user_stage.pop(chat_id, None)
+    bot.send_message(message.chat.id, "Asosiy menyu:", reply_markup=main_menu())
+    user_stage.pop(message.chat.id, None)
 
-# ============================================================
-# CALLBACK FUNKSIYASINI SAQLAYMIZ
-# ============================================================
+# =====================================================
+# FEEDBACK
+# =====================================================
 
 def get_feedback_inline():
     keyboard = types.InlineKeyboardMarkup()
     btn = types.InlineKeyboardButton(
         text="E'tiroz yuborish ✍🏼",
-        url="https://t.me/khakimovvss"
+        url="https://t.me/khakimovvd"
     )
     keyboard.add(btn)
     return keyboard
 
-@bot.message_handler(commands=['feedback'])
-def send_test(message):
-    chat_id = message.chat.id
+@bot.message_handler(func=lambda m: m.text == "✍🏼 Feedback")
+def feedback(message):
     bot.send_message(
-        chat_id,
-        "Agar bot haqida e’tirozlaringiz bo‘lsa pastdagi tugmani bosing 👇🏼",
+        message.chat.id,
+        "Taklif yoki e’tiroz yuborish uchun pastdagi tugmani bosing:",
         reply_markup=get_feedback_inline()
     )
 
-# ============================================================
+# =====================================================
 # BOT START
-# ============================================================
+# =====================================================
 
 if __name__ == "__main__":
     print("Bot ishga tushdi...")
